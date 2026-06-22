@@ -3,10 +3,13 @@ FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY observability/ ./observability/
+COPY services/order/go.mod services/order/go.sum* ./services/order/
+
+WORKDIR /app/services/order
 RUN go mod download
 
-COPY . .
+COPY services/order/ ./
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o order-service .
 
@@ -17,7 +20,7 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-COPY --from=builder /app/order-service .
+COPY --from=builder /app/services/order/order-service .
 
 EXPOSE 8080
 

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
+
+	"github.com/ecommerce/observability"
 )
 
 type Product struct {
@@ -30,15 +31,6 @@ var products = []Product{
 	{ID: "10", Name: "GoPro Hero 12", Price: 399.99, Stock: 18, Category: "Electronics", Image: "https://m.media-amazon.com/images/I/61p2fYPGMEL._AC_SL1500_.jpg"},
 	{ID: "11", Name: "Adidas Ultraboost 23", Price: 189.99, Stock: 50, Category: "Fashion", Image: "https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill/ultraboost"},
 	{ID: "12", Name: "Nintendo Switch OLED", Price: 349.99, Stock: 22, Category: "Gaming", Image: "https://assets.nintendo.com/image/upload/ncom/en_US/switch/oled-model"},
-}
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		log.Printf("[REQUEST] method=%s path=%s remote=%s", r.Method, r.URL.Path, r.RemoteAddr)
-		next.ServeHTTP(w, r)
-		log.Printf("[RESPONSE] method=%s path=%s duration=%s", r.Method, r.URL.Path, time.Since(start))
-	})
 }
 
 func main() {
@@ -71,6 +63,5 @@ func main() {
 		fmt.Fprintf(w, `{"error":"product not found"}`)
 	})
 
-	log.Println("Product Service running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", loggingMiddleware(mux)))
+	observability.Run("product-service", mux)
 }

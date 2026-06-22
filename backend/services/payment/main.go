@@ -7,6 +7,8 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
+
+	"github.com/ecommerce/observability"
 )
 
 type Payment struct {
@@ -27,15 +29,6 @@ type PaymentRequest struct {
 
 var payments []Payment
 var paymentCounter = 0
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		log.Printf("[REQUEST] method=%s path=%s remote=%s", r.Method, r.URL.Path, r.RemoteAddr)
-		next.ServeHTTP(w, r)
-		log.Printf("[RESPONSE] method=%s path=%s duration=%s", r.Method, r.URL.Path, time.Since(start))
-	})
-}
 
 func generateTxnID() string {
 	chars := "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -108,6 +101,5 @@ func main() {
 		json.NewEncoder(w).Encode(payments)
 	})
 
-	log.Println("Payment Service running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", loggingMiddleware(mux)))
+	observability.Run("payment-service", mux)
 }

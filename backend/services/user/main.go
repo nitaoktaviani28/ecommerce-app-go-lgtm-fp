@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/ecommerce/observability"
 )
 
 type User struct {
@@ -31,15 +33,6 @@ var users = []User{
 	{ID: 1, Name: "John Doe", Email: "john@example.com", Password: "password123", Role: "customer"},
 	{ID: 2, Name: "Jane Smith", Email: "jane@example.com", Password: "password123", Role: "admin"},
 	{ID: 3, Name: "Demo User", Email: "demo@shop.com", Password: "demo123", Role: "customer"},
-}
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		log.Printf("[REQUEST] method=%s path=%s remote=%s", r.Method, r.URL.Path, r.RemoteAddr)
-		next.ServeHTTP(w, r)
-		log.Printf("[RESPONSE] method=%s path=%s duration=%s", r.Method, r.URL.Path, time.Since(start))
-	})
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -138,6 +131,5 @@ func main() {
 	mux.HandleFunc("/auth/login", handleLogin)
 	mux.HandleFunc("/auth/register", handleRegister)
 
-	log.Println("User Service running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", loggingMiddleware(mux)))
+	observability.Run("user-service", mux)
 }

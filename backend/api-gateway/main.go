@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
-	"time"
+
+	"github.com/ecommerce/observability"
 )
 
 func corsMiddleware(h http.Handler) http.Handler {
@@ -23,15 +23,6 @@ func corsMiddleware(h http.Handler) http.Handler {
 		}
 
 		h.ServeHTTP(w, r)
-	})
-}
-
-func loggingMiddleware(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		log.Printf("[REQUEST] method=%s path=%s remote=%s", r.Method, r.URL.Path, r.RemoteAddr)
-		h.ServeHTTP(w, r)
-		log.Printf("[RESPONSE] method=%s path=%s duration=%s", r.Method, r.URL.Path, time.Since(start))
 	})
 }
 
@@ -72,6 +63,5 @@ func main() {
 	mux.HandleFunc("/api/payments/", proxyHandler(paymentURL, "/api"))
 	mux.HandleFunc("/api/payments", proxyHandler(paymentURL, "/api"))
 
-	log.Println("API Gateway running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", loggingMiddleware(corsMiddleware(mux))))
+	observability.Run("api-gateway", corsMiddleware(mux))
 }

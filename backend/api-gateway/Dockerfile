@@ -3,14 +3,16 @@ FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-# Copy go mod files
-COPY go.mod go.sum ./
+# Copy observability package first
+COPY observability/ ./observability/
 
-# Download dependencies
+# Copy api-gateway module
+COPY api-gateway/go.mod api-gateway/go.sum* ./api-gateway/
+
+WORKDIR /app/api-gateway
 RUN go mod download
 
-# Copy source code
-COPY . .
+COPY api-gateway/ ./
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o api-gateway .
@@ -23,7 +25,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy binary from builder
-COPY --from=builder /app/api-gateway .
+COPY --from=builder /app/api-gateway/api-gateway .
 
 EXPOSE 8080
 

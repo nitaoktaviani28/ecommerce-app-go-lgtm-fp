@@ -29,27 +29,33 @@ jobs:
       matrix:
         service:
           - name: api-gateway
-            path: backend/api-gateway
+            path: backend
+            dockerfile: backend/api-gateway/Dockerfile
             image: ecommerce-api-gateway
             
           - name: product-service
-            path: backend/services/product
+            path: backend
+            dockerfile: backend/services/product/Dockerfile
             image: ecommerce-product
             
           - name: order-service
-            path: backend/services/order
+            path: backend
+            dockerfile: backend/services/order/Dockerfile
             image: ecommerce-order
             
           - name: user-service
-            path: backend/services/user
+            path: backend
+            dockerfile: backend/services/user/Dockerfile
             image: ecommerce-user
             
           - name: payment-service
-            path: backend/services/payment
+            path: backend
+            dockerfile: backend/services/payment/Dockerfile
             image: ecommerce-payment
             
           - name: frontend
             path: frontend
+            dockerfile: frontend/Dockerfile
             image: ecommerce-frontend
       
       max-parallel: 2
@@ -80,7 +86,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.service.path }}
-          file: ${{ matrix.service.path }}/Dockerfile
+          file: ${{ matrix.service.dockerfile }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

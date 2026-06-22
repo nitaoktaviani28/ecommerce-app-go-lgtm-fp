@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/ecommerce/observability"
 )
 
 type OrderItem struct {
@@ -26,15 +28,6 @@ type Order struct {
 
 var orders []Order
 var orderCounter = 0
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		log.Printf("[REQUEST] method=%s path=%s remote=%s", r.Method, r.URL.Path, r.RemoteAddr)
-		next.ServeHTTP(w, r)
-		log.Printf("[RESPONSE] method=%s path=%s duration=%s", r.Method, r.URL.Path, time.Since(start))
-	})
-}
 
 func main() {
 	mux := http.NewServeMux()
@@ -122,6 +115,5 @@ func main() {
 		fmt.Fprintf(w, `{"error":"order not found"}`)
 	})
 
-	log.Println("Order Service running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", loggingMiddleware(mux)))
+	observability.Run("order-service", mux)
 }
