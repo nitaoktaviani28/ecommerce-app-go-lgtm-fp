@@ -1,5 +1,21 @@
 {
-  "description": "Grafana Faro RUM — Ecommerce FP",
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Grafana Faro RUM Dashboard v6 — Ecommerce (With Error Tracking)",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -7,386 +23,703 @@
   "panels": [
     {
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 100,
-      "title": "📊 Overview",
+      "panels": [],
+      "title": "Key Performance Indicators",
       "type": "row"
     },
     {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {"fixedColor": "blue", "mode": "fixed"},
+          "color": {
+            "fixedColor": "#3b82f6",
+            "mode": "fixed"
+          },
           "mappings": [],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": 0}]},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#3b82f6",
+                "value": 0
+              }
+            ]
+          },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 1},
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
       "id": 1,
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
-        "textMode": "value"
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum(count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | kind=\"event\" | event_name=\"page_view\" [$__range]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum(count_over_time({source=\"faro\"} | logfmt [$__range]))",
           "instant": true,
-          "legendFormat": "Page Views",
-          "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "Total Page Views",
+      "title": "Total Events",
       "type": "stat"
     },
     {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {"fixedColor": "green", "mode": "fixed"},
+          "color": {
+            "fixedColor": "#f59e0b",
+            "mode": "fixed"
+          },
           "mappings": [],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}]},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#f59e0b",
+                "value": 0
+              }
+            ]
+          },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 1},
-      "id": 2,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
-        "textMode": "value"
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 1
       },
-      "targets": [
-        {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum(count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | session_id!=\"\" [$__range]))",
-          "instant": true,
-          "legendFormat": "Sessions",
-          "queryType": "instant",
-          "refId": "A"
-        }
-      ],
-      "title": "Active Sessions",
-      "type": "stat"
-    },
-    {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-      "fieldConfig": {
-        "defaults": {
-          "color": {"fixedColor": "red", "mode": "fixed"},
-          "mappings": [],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "red", "value": 1}]},
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 1},
       "id": 3,
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
-        "textMode": "value"
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum(count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | kind=\"exception\" [$__range]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum(count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=\"add_to_cart\" [$__range]))",
           "instant": true,
-          "legendFormat": "Errors",
-          "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "Total Errors",
+      "title": "Add to Cart",
       "type": "stat"
     },
     {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {"fixedColor": "orange", "mode": "fixed"},
+          "color": {
+            "fixedColor": "#ec4899",
+            "mode": "fixed"
+          },
           "mappings": [],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "orange", "value": 0}]},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#ec4899",
+                "value": 0
+              }
+            ]
+          },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 1},
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
       "id": 4,
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
-        "textMode": "value"
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum(count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | kind=\"measurement\" | type=\"web-vitals\" [$__range]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum(count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=\"checkout_completed\" [$__range]))",
           "instant": true,
-          "legendFormat": "Web Vitals",
-          "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "Web Vitals Events",
+      "title": "Checkout Completed",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#ef4444",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#ef4444",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum(count_over_time({source=\"faro\"} | logfmt | kind=\"exception\" [$__range]))",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Errors & Exceptions",
       "type": "stat"
     },
     {
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 6},
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
       "id": 101,
-      "title": "🛒 E-commerce Events",
+      "panels": [],
+      "title": "User Journey & Conversion",
       "type": "row"
     },
     {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "palette-classic"},
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Events",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "bars",
-            "fillOpacity": 80,
+            "fillOpacity": 70,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
             "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
-            "stacking": {"group": "A", "mode": "normal"}
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 0,
+        "y": 6
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum by (event_name) (count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"add_to_cart|checkout_completed|session_extend\" [$__interval]))",
+          "legendFormat": "{{event_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Event Timeline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
           },
           "mappings": [],
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 7},
-      "id": 5,
-      "options": {
-        "legend": {"calcs": ["sum"], "displayMode": "list", "placement": "bottom", "showLegend": true},
-        "tooltip": {"mode": "multi", "sort": "desc"}
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 6
       },
-      "targets": [
-        {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum by (event_name) (count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | kind=\"event\" | event_name=~\"page_view|add_to_cart|checkout_initiated|checkout_completed\" [$__interval]))",
-          "legendFormat": "{{event_name}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Funnel Events Over Time",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-      "fieldConfig": {
-        "defaults": {
-          "color": {"mode": "palette-classic"},
-          "custom": {"hideFrom": {"legend": false, "tooltip": false, "viz": false}},
-          "mappings": [],
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 7},
       "id": 6,
       "options": {
-        "displayLabels": ["name", "value"],
-        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "displayLabels": [
+          "name",
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "pieType": "donut",
-        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
-        "sort": "desc"
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
       },
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum by (event_name) (count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | kind=\"event\" | event_name=~\"add_to_cart|checkout_initiated|checkout_completed\" [$__range]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum by (event_name) (count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"add_to_cart|checkout_completed\" [$__range]))",
           "legendFormat": "{{event_name}}",
           "refId": "A"
         }
       ],
-      "title": "Conversion Funnel",
+      "title": "Conversion Distribution",
       "type": "piechart"
     },
     {
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 15},
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
       "id": 102,
-      "title": "📈 Events by Kind & HTTP",
+      "panels": [],
+      "title": "Error & HTTP Status Monitoring",
       "type": "row"
     },
     {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "palette-classic"},
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Error Count",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "bars",
-            "fillOpacity": 60,
+            "fillOpacity": 70,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
             "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
-            "stacking": {"group": "A", "mode": "normal"}
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
           },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
-      "id": 12,
-      "options": {
-        "legend": {"calcs": ["sum"], "displayMode": "list", "placement": "bottom", "showLegend": true},
-        "tooltip": {"mode": "multi", "sort": "desc"}
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 15
       },
-      "targets": [
-        {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum by (kind) (count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt [$__interval]))",
-          "legendFormat": "{{kind}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Events by Kind",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-      "fieldConfig": {
-        "defaults": {
-          "color": {"mode": "palette-classic"},
-          "custom": {
-            "drawStyle": "bars",
-            "fillOpacity": 60,
-            "lineWidth": 1,
-            "showPoints": "never",
-            "stacking": {"group": "A", "mode": "normal"}
-          },
-          "unit": "short"
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
         },
-        "overrides": []
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
-      "id": 13,
-      "options": {
-        "legend": {"calcs": ["sum"], "displayMode": "list", "placement": "bottom", "showLegend": true},
-        "tooltip": {"mode": "multi", "sort": "desc"}
-      },
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum by (event_data_http.status_code) (count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | event_name=\"faro.tracing.xml-http-request\" [$__interval]))",
-          "legendFormat": "HTTP {{event_data_http.status_code}}",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum by (event_data_http_status_code) (count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"faro.tracing.xml-http-request\" | event_data_http_status_code=~\"[4-5][0-9]{2}\" [$__interval]))",
+          "legendFormat": "Status {{event_data_http_status_code}}",
           "refId": "A"
         }
       ],
-      "title": "HTTP Requests by Status Code",
+      "title": "HTTP Error Status Codes (4xx/5xx) Over Time",
       "type": "timeseries"
     },
     {
-      "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 24},
-      "id": 104,
-      "title": "⚡ Web Vitals",
-      "type": "row"
-    },
-    {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
       },
-      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 25},
-      "id": 14,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "showLabels": true,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
-      "targets": [
-        {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "{source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | kind=\"measurement\" | type=\"web-vitals\"",
-          "refId": "A"
-        }
-      ],
-      "title": "Web Vitals Logs",
-      "type": "logs"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 35},
-      "id": 105,
-      "title": "🔴 Errors & Exceptions",
-      "type": "row"
-    },
-    {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-      "fieldConfig": {"defaults": {}, "overrides": []},
-      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 36},
-      "id": 7,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "showLabels": true,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
-      "targets": [
-        {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "{source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | kind=\"exception\"",
-          "refId": "A"
-        }
-      ],
-      "title": "Error Logs",
-      "type": "logs"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 46},
-      "id": 103,
-      "title": "📊 Browser & User Info",
-      "type": "row"
-    },
-    {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "palette-classic"},
-          "custom": {"hideFrom": {"legend": false, "tooltip": false, "viz": false}},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
           "mappings": [],
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 47},
-      "id": 10,
-      "options": {
-        "displayLabels": ["name", "value"],
-        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
-        "pieType": "donut",
-        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
-        "sort": "desc"
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 15
       },
+      "id": 17,
+      "options": {
+        "displayLabels": [
+          "name",
+          "value"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum by (browser_name) (count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | browser_name!=\"\" [$__range]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum by (event_data_http_status_code) (count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"faro.tracing.xml-http-request\" [$__range]))",
+          "legendFormat": "Status {{event_data_http_status_code}}",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP Status Distribution (All)",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 103,
+      "panels": [],
+      "title": "Browser & Device Analytics",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 24
+      },
+      "id": 9,
+      "options": {
+        "displayLabels": [
+          "name",
+          "value"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum by (browser_name) (count_over_time({source=\"faro\"} | logfmt | browser_name!=\"\" [$__range]))",
           "legendFormat": "{{browser_name}}",
           "refId": "A"
         }
@@ -395,29 +728,67 @@
       "type": "piechart"
     },
     {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "palette-classic"},
-          "custom": {"hideFrom": {"legend": false, "tooltip": false, "viz": false}},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
           "mappings": [],
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 47},
-      "id": 11,
-      "options": {
-        "displayLabels": ["name", "value"],
-        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
-        "pieType": "donut",
-        "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
-        "sort": "desc"
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 24
       },
+      "id": 10,
+      "options": {
+        "displayLabels": [
+          "name",
+          "value"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "sum by (browser_os) (count_over_time({source=\"faro\",app=\"ecommerce-frontend\"} | logfmt | browser_os!=\"\" [$__range]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum by (browser_os) (count_over_time({source=\"faro\"} | logfmt | browser_os!=\"\" [$__range]))",
           "legendFormat": "{{browser_os}}",
           "refId": "A"
         }
@@ -426,42 +797,339 @@
       "type": "piechart"
     },
     {
-      "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 55},
-      "id": 106,
-      "title": "📋 All Faro Logs",
-      "type": "row"
-    },
-    {
-      "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 56},
-      "id": 8,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "showLabels": true,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
       },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 24
+      },
+      "id": 11,
+      "options": {
+        "displayLabels": [
+          "name",
+          "value"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {"type": "loki", "uid": "${datasource_loki}"},
-          "expr": "{source=\"faro\",app=\"ecommerce-frontend\"}",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum by (browser_mobile) (count_over_time({source=\"faro\"} | logfmt | browser_mobile!=\"\" [$__range]))",
+          "legendFormat": "{{browser_mobile}}",
           "refId": "A"
         }
       ],
-      "title": "Live Faro Stream",
+      "title": "Mobile vs Desktop",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 104,
+      "panels": [],
+      "title": "Event & App Analytics",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "id": 12,
+      "options": {
+        "displayLabels": [
+          "name",
+          "value"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum by (kind) (count_over_time({source=\"faro\"} | logfmt | kind!=\"\" [$__range]))",
+          "legendFormat": "{{kind}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Event Types Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "id": 13,
+      "options": {
+        "displayLabels": [
+          "name",
+          "value"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "sum by (app_name) (count_over_time({source=\"faro\"} | logfmt | app_name!=\"\" [$__range]))",
+          "legendFormat": "{{app_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Application Distribution",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 105,
+      "panels": [],
+      "title": "Raw Logs & Details",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
+      "id": 14,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showControls": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "{source=\"faro\"} | logfmt | kind=\"event\"",
+          "refId": "A"
+        }
+      ],
+      "title": "All Event Logs",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource_loki}"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 42
+      },
+      "id": 18,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showControls": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "expr": "{source=\"faro\"} | logfmt | (kind=\"exception\" or event_data_http_status_code=~\"[4-5][0-9]{2}\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Error & Exception Logs",
       "type": "logs"
     }
   ],
+  "preload": false,
   "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": ["faro", "rum", "frontend", "ecommerce"],
+  "schemaVersion": 42,
+  "tags": [
+    "faro",
+    "rum",
+    "frontend",
+    "ecommerce"
+  ],
   "templating": {
     "list": [
       {
-        "current": {"text": "Loki-Faro", "value": "loki-faro"},
+        "current": {
+          "text": "Loki-Faro",
+          "value": "loki-faro"
+        },
         "includeAll": false,
         "label": "Loki Datasource",
         "name": "datasource_loki",
@@ -472,9 +1140,13 @@
       }
     ]
   },
-  "time": {"from": "now-1h", "to": "now"},
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
   "timezone": "Asia/Jakarta",
-  "title": "Faro RUM — Ecommerce Frontend",
-  "uid": "faro-rum-ecommerce",
-  "version": 1
+  "title": "Ecommerce RUM Analytics Dashboard",
+  "uid": "faro-ecommerce-v6",
+  "version": 5
 }
