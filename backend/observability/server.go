@@ -3,6 +3,7 @@ package observability
 import (
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 )
 
@@ -14,6 +15,11 @@ func Run(serviceName string, handler http.Handler) {
 	if port == "" {
 		port = "8080"
 	}
+
+	go func() {
+		log.Printf("%s pprof on :6060", serviceName)
+		http.ListenAndServe(":6060", nil)
+	}()
 
 	wrapped := WrapHandler(serviceName, handler)
 

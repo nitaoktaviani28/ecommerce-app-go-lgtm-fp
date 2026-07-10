@@ -21,9 +21,11 @@ spec:
     spec:
       containers:
       - name: api-gateway
-        image: your-dockerhub-username/ecommerce-api-gateway:latest
+        image: haechanlovelove/ecommerce-api-gateway:latest
         ports:
         - containerPort: 8080
+        - containerPort: 6060
+          name: pprof
         livenessProbe:
           httpGet:
             path: /health

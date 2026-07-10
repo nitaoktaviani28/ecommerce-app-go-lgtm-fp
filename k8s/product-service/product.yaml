@@ -15,9 +15,11 @@ spec:
     spec:
       containers:
       - name: product-service
-        image: your-dockerhub-username/ecommerce-product:latest
+        image: haechanlovelove/ecommerce-product:latest
         ports:
         - containerPort: 8080
+        - containerPort: 6060
+          name: pprof
         livenessProbe:
           httpGet:
             path: /health

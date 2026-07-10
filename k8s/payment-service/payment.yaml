@@ -15,9 +15,11 @@ spec:
     spec:
       containers:
       - name: payment-service
-        image: your-dockerhub-username/ecommerce-payment:latest
+        image: haechanlovelove/ecommerce-payment:latest
         ports:
         - containerPort: 8080
+        - containerPort: 6060
+          name: pprof
         livenessProbe:
           httpGet:
             path: /health

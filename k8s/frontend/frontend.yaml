@@ -15,14 +15,14 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: your-dockerhub-username/ecommerce-frontend:latest
+        image: haechanlovelove/ecommerce-frontend:latest
         ports:
         - containerPort: 3000
         env:
         - name: VITE_API_URL
-          value: "http://api-gateway.ecommerce.svc.cluster.local:8080/api"
+          value: "http://20.198.185.121:8080/api"
         - name: VITE_FARO_COLLECTOR_URL
-          value: "http://alloy.monitoring.svc.cluster.local:12347/collect"
+          value: "http://4.144.161.30:12347/collect"
         livenessProbe:
           httpGet:
             path: /
