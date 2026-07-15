@@ -1,0 +1,172 @@
+global:
+  extraEnv:
+    - name: AZURE_ACCOUNT_KEY
+      value: "${AZURE_STORAGE_ACCOUNT_KEY}"
+
+distributor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 75m
+      memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+
+gateway:
+  resources:
+    requests:
+      cpu: 75m
+      memory: 128Mi
+    limits:
+      cpu: 128m
+      memory: 250Mi
+
+query_frontend:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 75m
+      memory: 252Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+
+query_scheduler:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 75m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 75m
+      memory: 312Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+
+ingester:
+  replicas: 1
+  zoneAwareReplication:
+    enabled: false
+  persistentVolume:
+    enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 315Mi
+    limits:
+      cpu: 185m
+      memory: 512Mi
+
+store_gateway:
+  replicas: 1
+  zoneAwareReplication:
+    enabled: false
+  persistentVolume:
+    enabled: true
+    storageClass: managed-csi
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 75m
+      memory: 285Mi
+    limits:
+      cpu: 128m
+      memory: 428Mi
+
+compactor:
+  persistentVolume:
+    enabled: true
+    storageClass: managed-csi
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 75m
+      memory: 284Mi
+    limits:
+      cpu: 128m
+      memory: 368Mi
+
+alertmanager:
+  persistentVolume:
+    enabled: true
+    storageClass: managed-csi
+    size: 5Gi
+  fallbackConfig: |
+    route:
+      receiver: default
+    receivers:
+      - name: default
+  resources:
+    requests:
+      cpu: 75m
+      memory: 156Mi
+    limits:
+      cpu: 128m
+      memory: 212Mi
+
+ruler:
+  resources:
+    requests:
+      cpu: 75m
+      memory: 156Mi
+    limits:
+      cpu: 128m
+      memory: 212Mi
+
+overrides_exporter:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 100m
+      memory: 156Mi
+
+kafka:
+  enabled: true
+
+minio:
+  enabled: false
+
+mimir:
+  extraArgs:
+    - -config.expand-env=true
+
+  structuredConfig:
+    usage_stats:
+      enabled: false
+
+    limits:
+      max_query_lookback: 1h
+
+    common:
+      storage:
+        backend: azure
+        azure:
+          account_name: blobstoragelgtm01
+          account_key: ${AZURE_ACCOUNT_KEY}
+          endpoint_suffix: blob.core.windows.net
+
+    blocks_storage:
+      backend: azure
+      azure:
+        container_name: mimir-blocks
+
+    alertmanager_storage:
+      backend: azure
+      azure:
+        container_name: mimir-alertmanager
+
+    ruler_storage:
+      backend: azure
+      azure:
+        container_name: mimir-ruler

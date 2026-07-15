@@ -1,0 +1,302 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Grafana Faro RUM Dashboard — Ecommerce (Docker Swarm)",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Key Performance Indicators",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "#3b82f6", "mode": "fixed" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "#3b82f6", "value": 0 }] },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [
+        { "expr": "sum(count_over_time({job=\"faro\"} | logfmt [$__range]))", "instant": true, "refId": "A" }
+      ],
+      "title": "Total Events",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "#f59e0b", "mode": "fixed" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "#f59e0b", "value": 0 }] },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "id": 3,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [
+        { "expr": "sum(count_over_time({job=\"faro\"} | logfmt | kind=\"event\" | event_name=\"add_to_cart\" [$__range]))", "instant": true, "refId": "A" }
+      ],
+      "title": "Add to Cart",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "#ec4899", "mode": "fixed" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "#ec4899", "value": 0 }] },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "id": 4,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [
+        { "expr": "sum(count_over_time({job=\"faro\"} | logfmt | kind=\"event\" | event_name=\"checkout_completed\" [$__range]))", "instant": true, "refId": "A" }
+      ],
+      "title": "Checkout Completed",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "#ef4444", "mode": "fixed" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "#ef4444", "value": 0 }] },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "id": 15,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "targets": [
+        { "expr": "sum(count_over_time({job=\"faro\"} | logfmt | kind=\"exception\" [$__range]))", "instant": true, "refId": "A" }
+      ],
+      "title": "Errors & Exceptions",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "title": "User Journey & Conversion",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "stacking": { "mode": "normal" } },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 6 },
+      "id": 5,
+      "options": { "legend": { "calcs": ["sum", "mean"], "displayMode": "table", "placement": "right" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "sum by (event_name) (count_over_time({job=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"add_to_cart|checkout_completed|session_extend\" [$__interval]))", "legendFormat": "{{event_name}}", "refId": "A" }
+      ],
+      "title": "Event Timeline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 6 },
+      "id": 6,
+      "options": { "displayLabels": ["name", "percent"], "pieType": "donut", "reduceOptions": { "calcs": ["sum"] }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        { "expr": "sum by (event_name) (count_over_time({job=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"add_to_cart|checkout_completed\" [$__range]))", "legendFormat": "{{event_name}}", "refId": "A" }
+      ],
+      "title": "Conversion Distribution",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 102,
+      "title": "Error & HTTP Status Monitoring",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "stacking": { "mode": "normal" } },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "id": 16,
+      "options": { "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "right" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "sum by (event_data_http_status_code) (count_over_time({job=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"faro.tracing.xml-http-request\" | event_data_http_status_code=~\"[4-5][0-9]{2}\" [$__interval]))", "legendFormat": "Status {{event_data_http_status_code}}", "refId": "A" }
+      ],
+      "title": "HTTP Error Status Codes (4xx/5xx) Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "id": 17,
+      "options": { "displayLabels": ["name", "value"], "pieType": "donut", "reduceOptions": { "calcs": ["sum"] }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        { "expr": "sum by (event_data_http_status_code) (count_over_time({job=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"faro.tracing.xml-http-request\" [$__range]))", "legendFormat": "Status {{event_data_http_status_code}}", "refId": "A" }
+      ],
+      "title": "HTTP Status Distribution (All)",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 103,
+      "title": "Browser & Device Analytics",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
+      "id": 9,
+      "options": { "displayLabels": ["name", "value"], "pieType": "donut", "reduceOptions": { "calcs": ["sum"] }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        { "expr": "sum by (browser_name) (count_over_time({job=\"faro\"} | logfmt | browser_name!=\"\" [$__range]))", "legendFormat": "{{browser_name}}", "refId": "A" }
+      ],
+      "title": "Browser Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
+      "id": 10,
+      "options": { "displayLabels": ["name", "value"], "pieType": "donut", "reduceOptions": { "calcs": ["sum"] }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        { "expr": "sum by (browser_os) (count_over_time({job=\"faro\"} | logfmt | browser_os!=\"\" [$__range]))", "legendFormat": "{{browser_os}}", "refId": "A" }
+      ],
+      "title": "OS Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
+      "id": 11,
+      "options": { "displayLabels": ["name", "value"], "pieType": "donut", "reduceOptions": { "calcs": ["sum"] }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        { "expr": "sum by (browser_mobile) (count_over_time({job=\"faro\"} | logfmt | browser_mobile!=\"\" [$__range]))", "legendFormat": "{{browser_mobile}}", "refId": "A" }
+      ],
+      "title": "Mobile vs Desktop",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "id": 104,
+      "title": "Event & App Analytics",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 33 },
+      "id": 12,
+      "options": { "displayLabels": ["name", "value"], "pieType": "donut", "reduceOptions": { "calcs": ["sum"] }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        { "expr": "sum by (kind) (count_over_time({job=\"faro\"} | logfmt | kind!=\"\" [$__range]))", "legendFormat": "{{kind}}", "refId": "A" }
+      ],
+      "title": "Event Types Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 33 },
+      "id": 13,
+      "options": { "displayLabels": ["name", "value"], "pieType": "donut", "reduceOptions": { "calcs": ["sum"] }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        { "expr": "sum by (app_name) (count_over_time({job=\"faro\"} | logfmt | app_name!=\"\" [$__range]))", "legendFormat": "{{app_name}}", "refId": "A" }
+      ],
+      "title": "Application Distribution",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 41 },
+      "id": 105,
+      "title": "Raw Logs & Details",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 42 },
+      "id": 14,
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": false },
+      "targets": [
+        { "expr": "{job=\"faro\"} | logfmt | kind=\"event\"", "refId": "A" }
+      ],
+      "title": "All Event Logs",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 42 },
+      "id": 18,
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": false },
+      "targets": [
+        { "expr": "{job=\"faro\"} | logfmt | (kind=\"exception\" or event_data_http_status_code=~\"[4-5][0-9]{2}\")", "refId": "A" }
+      ],
+      "title": "Error & Exception Logs",
+      "type": "logs"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["faro", "rum", "frontend", "ecommerce"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "Asia/Jakarta",
+  "title": "Ecommerce RUM Analytics (Faro)",
+  "uid": "faro-ecommerce-swarm",
+  "version": 1
+}

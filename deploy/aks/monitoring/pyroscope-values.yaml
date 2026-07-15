@@ -1,0 +1,137 @@
+pyroscope:
+  extraArgs:
+    log.level: debug
+
+  structuredConfig:
+    multitenancy_enabled: false
+
+    limits:
+      retention_period: 1h
+
+    storage:
+      backend: azure
+      azure:
+        account_name: blobstoragelgtm01
+        account_key: "${AZURE_STORAGE_ACCOUNT_KEY}"
+        container_name: pyroscope-data
+        endpoint_suffix: blob.core.windows.net
+
+architecture:
+  storage:
+    v1: false
+    v2: true
+
+  microservices:
+    enabled: true
+
+    v2:
+      distributor:
+        kind: Deployment
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
+
+      segment-writer:
+        kind: StatefulSet
+        replicaCount: 1
+        terminationGracePeriodSeconds: 300
+        resources:
+          requests:
+            cpu: 150m
+            memory: 256Mi
+          limits:
+            cpu: 400m
+            memory: 512Mi
+
+      query-frontend:
+        kind: Deployment
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+      query-backend:
+        kind: Deployment
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
+
+      compaction-worker:
+        kind: StatefulSet
+        replicaCount: 1
+        terminationGracePeriodSeconds: 600
+        persistence:
+          enabled: false
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 300m
+            memory: 512Mi
+
+      metastore:
+        kind: StatefulSet
+        replicaCount: 3
+        persistence:
+          enabled: false
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+      tenant-settings:
+        kind: Deployment
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+      ad-hoc-profiles:
+        kind: Deployment
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+      admin:
+        kind: Deployment
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+minio:
+  enabled: false
+
+alloy:
+  enabled: false

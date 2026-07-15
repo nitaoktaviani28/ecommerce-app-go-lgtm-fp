@@ -1,0 +1,111 @@
+global:
+  extraEnv:
+    - name: AZURE_ACCOUNT_KEY
+      value: "${AZURE_STORAGE_ACCOUNT_KEY}"
+
+storage:
+  trace:
+    backend: azure
+    azure:
+      storage_account_name: blobstoragelgtm01
+      storage_account_key: ${AZURE_ACCOUNT_KEY}
+      container_name: tempo-traces
+      endpoint_suffix: blob.core.windows.net
+    blocklist_poll_jitter_ms: 500
+    blocklist_poll_tenant_index_builders: 1
+
+traces:
+  otlp:
+    grpc:
+      enabled: true
+    http:
+      enabled: true
+
+distributor:
+  replicas: 1
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+ingester:
+  replicas: 3
+  persistence:
+    enabled: false
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 75m
+      memory: 512Mi
+    limits:
+      cpu: 300m
+      memory: 1Gi
+
+queryFrontend:
+  replicas: 1
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+querier:
+  replicas: 1
+  extraArgs:
+    - -config.expand-env=true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+compactor:
+  persistence:
+    enabled: false
+  extraArgs:
+    - -config.expand-env=true
+  livenessProbe: null
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 3200
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    failureThreshold: 10
+  resources:
+    requests:
+      cpu: 75m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+metricsGenerator:
+  enabled: true
+  extraArgs:
+    - -config.expand-env=true
+  config:
+    storage:
+      remote_write:
+        - url: http://mimir-gateway.monitoring.svc.cluster.local/api/v1/push
+          headers:
+            X-Scope-OrgID: tempo-metrics
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi

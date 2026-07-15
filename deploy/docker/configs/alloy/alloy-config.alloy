@@ -1,0 +1,184 @@
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "docker_logs" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.+)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/.+_(.+)\\..+"
+    target_label  = "service"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "docker"
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.docker_logs.output
+  forward_to = [loki.process.docker_logs.receiver]
+}
+
+loki.process "docker_logs" {
+  stage.regex {
+    expression = "(?i)(?P<level>(error|warn|info|debug|fatal|panic|critical))"
+  }
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+  forward_to = [loki.write.loki.receiver]
+}
+
+loki.write "loki" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    traces  = [otelcol.processor.batch.traces.input]
+    metrics = [otelcol.exporter.prometheus.service_metrics.input]
+  }
+}
+
+otelcol.exporter.prometheus "service_metrics" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+otelcol.processor.batch "traces" {
+  output {
+    traces = [otelcol.exporter.otlphttp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlphttp "tempo" {
+  client {
+    endpoint = "http://tempo:4318"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+faro.receiver "frontend" {
+  server {
+    listen_address = "0.0.0.0"
+    listen_port    = 12347
+
+    cors_allowed_origins = ["*"]
+  }
+
+  output {
+    logs   = [loki.process.faro_logs.receiver]
+    traces = [otelcol.processor.batch.traces.input]
+  }
+}
+
+loki.process "faro_logs" {
+  stage.static_labels {
+    values = {
+      job     = "faro",
+      service = "ecommerce-frontend",
+    }
+  }
+  forward_to = [loki.write.loki.receiver]
+}
+
+prometheus.exporter.unix "node" {}
+
+prometheus.scrape "node" {
+  targets    = prometheus.exporter.unix.node.targets
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+discovery.docker "metrics" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "docker_metrics" {
+  targets = discovery.docker.metrics.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/.+_(.+)\\..+"
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.+)"
+    target_label  = "container"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "docker-services"
+  }
+}
+
+prometheus.exporter.cadvisor "containers" {
+  docker_host    = "unix:///var/run/docker.sock"
+  docker_only    = true
+  storage_duration = "5m"
+}
+
+prometheus.scrape "cadvisor" {
+  targets    = prometheus.exporter.cadvisor.containers.targets
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
+    headers = {
+      "X-Scope-OrgID" = "docker-swarm",
+    }
+  }
+}
+
+pyroscope.write "pyroscope" {
+  endpoint {
+    url = "http://pyroscope:4040"
+  }
+}
+
+pyroscope.scrape "golang_services" {
+  targets = [
+    {"__address__" = "api-gateway:8080", "service_name" = "api-gateway"},
+    {"__address__" = "product-service.ecommerce.svc.cluster.local:8080", "service_name" = "product-service"},
+    {"__address__" = "order-service.ecommerce.svc.cluster.local:8080", "service_name" = "order-service"},
+    {"__address__" = "user-service.ecommerce.svc.cluster.local:8080", "service_name" = "user-service"},
+    {"__address__" = "payment-service.ecommerce.svc.cluster.local:8080", "service_name" = "payment-service"},
+  ]
+  profiling_config {
+    profile.process_cpu {
+      enabled = true
+    }
+    profile.memory {
+      enabled = true
+    }
+    profile.goroutine {
+      enabled = true
+    }
+  }
+  forward_to = [pyroscope.write.pyroscope.receiver]
+}

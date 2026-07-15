@@ -1,0 +1,99 @@
+alloy:
+  configMap:
+    create: false
+    name: alloy-config
+    key: config.alloy
+
+  extraEnv:
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+
+  mounts:
+    varlog: true
+    extra:
+      - name: proc
+        mountPath: /proc
+      - name: sys
+        mountPath: /sys
+
+  securityContext:
+    privileged: true
+    runAsUser: 0
+
+controller:
+  type: daemonset
+  hostPID: true
+  hostNetwork: false
+  tolerations:
+    - operator: Exists
+
+  volumes:
+    extra:
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
+        hostPath:
+          path: /sys
+
+  extraPorts:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+    - name: faro
+      port: 12347
+      targetPort: 12347
+      protocol: TCP
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+# --- Setelah helm install, apply service manual: ---
+# kubectl delete svc alloy -n monitoring --ignore-not-found
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: alloy
+#   namespace: monitoring
+# spec:
+#   selector:
+#     app.kubernetes.io/name: alloy
+#   ports:
+#     - name: http
+#       port: 12345
+#       targetPort: 12345
+#     - name: otlp-grpc
+#       port: 4317
+#       targetPort: 4317
+#     - name: otlp-http
+#       port: 4318
+#       targetPort: 4318
+#     - name: faro
+#       port: 12347
+#       targetPort: 12347
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: alloy-faro
+#   namespace: monitoring
+# spec:
+#   type: LoadBalancer
+#   selector:
+#     app.kubernetes.io/name: alloy
+#   ports:
+#     - name: faro
+#       port: 12347
+#       targetPort: 12347
+# EOF

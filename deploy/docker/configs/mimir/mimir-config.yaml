@@ -1,0 +1,71 @@
+multitenancy_enabled: true
+
+target: all
+
+server:
+  http_listen_port: 9009
+  grpc_listen_port: 9095
+
+common:
+  storage:
+    backend: azure
+    azure:
+      account_name: blobstoragelgtmfpv1
+      account_key: ${AZURE_STORAGE_ACCOUNT_KEY}
+      endpoint_suffix: blob.core.windows.net
+
+ingester:
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+    replication_factor: 1
+
+store_gateway:
+  sharding_ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+    replication_factor: 1
+
+compactor:
+  sharding_ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+  data_dir: /mimir/compactor
+
+blocks_storage:
+  backend: azure
+  azure:
+    container_name: mimir-blocks
+  tsdb:
+    dir: /mimir/tsdb
+  bucket_store:
+    sync_dir: /mimir/tsdb-sync
+
+alertmanager_storage:
+  backend: azure
+  azure:
+    container_name: mimir-alertmanager
+
+ruler_storage:
+  backend: azure
+  azure:
+    container_name: mimir-ruler
+
+alertmanager:
+  fallback_config_file: /mimir/alertmanager-fallback.yaml
+  data_dir: /mimir/alertmanager
+
+ruler:
+  rule_path: /mimir/ruler
+
+limits:
+  max_query_lookback: 72h
+
+usage_stats:
+  enabled: false
+
+frontend_worker:
+  frontend_address: 127.0.0.1:9095

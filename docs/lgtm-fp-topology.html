@@ -4,123 +4,57 @@
   <meta charset="UTF-8">
   <title>LGTM-FP Topology</title>
   <style>
-    body {
-      background: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 40px;
-    }
-    .container {
-      width: 100%;
-      max-width: 1400px;
-    }
-    h1 {
-      text-align: center;
-      font-family: 'Segoe UI', sans-serif;
-      color: #1a1a2e;
-      margin-bottom: 30px;
-      font-size: 28px;
-    }
-    .mermaid {
-      display: flex;
-      justify-content: center;
-    }
-    .mermaid svg {
-      max-width: 100%;
-      height: auto;
-      min-height: 600px;
-    }
+    body { background: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 60px; }
+    .container { width: 100%; }
+    h1 { text-align: center; font-family: 'Segoe UI', sans-serif; color: #1a1a2e; margin-bottom: 40px; font-size: 28px; font-weight: 600; }
+    .mermaid { display: flex; justify-content: center; }
+    .mermaid svg { min-width: 1000px; min-height: 500px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔭 LGTM-FP Observability Stack — Architecture</h1>
+    <h1>LGTM Stack Topology</h1>
     <div class="mermaid">
 graph LR
-    %% === DATA SOURCES ===
-    subgraph SRC["🎯 Data Sources"]
-        direction TB
-        FE["🌐 Frontend\n(Vue.js + Faro SDK)\nRUM, Errors, Web Vitals"]
-        BE["⚙️ Backend Microservices\n(Go + OpenTelemetry)\nTraces, Metrics"]
-        INFRA["🖥️ Infrastructure\nNode Metrics, Pod Logs\ncAdvisor Metrics"]
-    end
+    FE["Frontend<br/>(Faro SDK)"]
+    BE["Backend<br/>(Go + OTel)"]
+    INFRA["Infrastructure<br/>(Node + Pod)"]
 
-    %% === COLLECTOR ===
-    subgraph COL["📡 Grafana Alloy (Collector)"]
-        direction TB
-        FARO_R["Faro Receiver\n:12347"]
-        OTLP_R["OTLP Receiver\n:4317 / :4318"]
-        LOG_R["Log Collector\n(file + push)"]
-        SCRAPE["Prometheus Scraper\n(node_exporter + cAdvisor)"]
-        EBPF["eBPF Profiler\n(CPU profiling)"]
-    end
+    ALLOY["Alloy<br/>(Collector)"]
 
-    %% === LGTM BACKENDS ===
-    subgraph LGTM["💾 LGTM Stack (Storage)"]
-        direction TB
-        L["📜 LOKI\n━━━━━━━━━━━\nLog Aggregation\n• Pod Logs\n• Faro RUM Logs\n• Error Logs"]
-        T["🔗 TEMPO\n━━━━━━━━━━━\nDistributed Tracing\n• Frontend Spans\n• Backend Spans\n• Service Map"]
-        M["📊 MIMIR\n━━━━━━━━━━━\nMetrics (Prometheus)\n• Node Metrics\n• Pod Metrics\n• App Metrics"]
-        P["🔥 PYROSCOPE\n━━━━━━━━━━━\nContinuous Profiling\n• CPU Profiles\n• Flame Graphs"]
-    end
+    L["Loki<br/>(Logs)"]
+    T["Tempo<br/>(Traces)"]
+    M["Mimir<br/>(Metrics)"]
+    P["Pyroscope<br/>(Profiles)"]
 
-    %% === VISUALIZATION ===
-    subgraph VIZ["👁️ Visualization & Alerting"]
-        direction TB
-        G["📈 GRAFANA\n━━━━━━━━━━━\nDashboards\n• Faro RUM\n• Node Metrics\n• Pod Metrics\n• K8s Overview"]
-        ALERT["🚨 Alerting\n━━━━━━━━━━━\n• CPU > 80%\n• Memory > 80%\n• Frontend Errors\n• Backend Errors"]
-        EMAIL["📧 Email\n(SMTP Gmail)"]
-    end
+    G["Grafana"]
+    EMAIL["Email Alert"]
 
-    %% === CONNECTIONS ===
-    FE -->|"logs + traces"| FARO_R
-    BE -->|"traces + metrics\n(OTLP/gRPC)"| OTLP_R
-    INFRA -->|"logs + metrics"| LOG_R
-    INFRA -->|"node + pod metrics"| SCRAPE
+    FE -->|logs + traces| ALLOY
+    BE -->|traces| ALLOY
+    INFRA -->|logs| ALLOY
+    INFRA -->|metrics| M
 
-    FARO_R --> L
-    FARO_R --> T
-    OTLP_R --> T
-    OTLP_R --> M
-    LOG_R --> L
-    SCRAPE --> M
-    EBPF --> P
+    ALLOY --> L
+    ALLOY --> T
+    ALLOY --> P
 
     L --> G
     T --> G
     M --> G
     P --> G
+    G --> EMAIL
 
-    G --> ALERT
-    ALERT --> EMAIL
-
-    %% === STYLING ===
-    style SRC fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
-    style COL fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style LGTM fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style VIZ fill:#fce4ec,stroke:#c62828,stroke-width:2px
-
-    style FE fill:#bbdefb,stroke:#1565c0
-    style BE fill:#bbdefb,stroke:#1565c0
-    style INFRA fill:#bbdefb,stroke:#1565c0
-
-    style FARO_R fill:#ffe0b2,stroke:#e65100
-    style OTLP_R fill:#ffe0b2,stroke:#e65100
-    style LOG_R fill:#ffe0b2,stroke:#e65100
-    style SCRAPE fill:#ffe0b2,stroke:#e65100
-    style EBPF fill:#ffe0b2,stroke:#e65100
-
-    style L fill:#c8e6c9,stroke:#2e7d32
-    style T fill:#c8e6c9,stroke:#2e7d32
-    style M fill:#c8e6c9,stroke:#2e7d32
-    style P fill:#c8e6c9,stroke:#2e7d32
-
-    style G fill:#f8bbd0,stroke:#c62828
-    style ALERT fill:#f8bbd0,stroke:#c62828
-    style EMAIL fill:#f8bbd0,stroke:#c62828
+    style FE fill:#dbeafe,stroke:#2563eb
+    style BE fill:#dbeafe,stroke:#2563eb
+    style INFRA fill:#dbeafe,stroke:#2563eb
+    style ALLOY fill:#fef3c7,stroke:#d97706
+    style L fill:#d1fae5,stroke:#059669
+    style T fill:#d1fae5,stroke:#059669
+    style M fill:#d1fae5,stroke:#059669
+    style P fill:#d1fae5,stroke:#059669
+    style G fill:#fce7f3,stroke:#db2777
+    style EMAIL fill:#fce7f3,stroke:#db2777
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
@@ -128,17 +62,8 @@ graph LR
     mermaid.initialize({ 
       startOnLoad: true,
       theme: 'base',
-      themeVariables: {
-        fontSize: '14px',
-        fontFamily: 'Segoe UI, sans-serif'
-      },
-      flowchart: {
-        useMaxWidth: false,
-        htmlLabels: true,
-        curve: 'basis',
-        nodeSpacing: 50,
-        rankSpacing: 80
-      }
+      themeVariables: { fontSize: '18px', fontFamily: 'Segoe UI, sans-serif' },
+      flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis', nodeSpacing: 80, rankSpacing: 120, padding: 30 }
     });
   </script>
 </body>

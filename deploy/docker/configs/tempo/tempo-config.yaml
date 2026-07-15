@@ -1,0 +1,53 @@
+target: all
+
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9096
+
+storage:
+  trace:
+    backend: azure
+    azure:
+      storage_account_name: blobstoragelgtmfpv1
+      storage_account_key: ${AZURE_STORAGE_ACCOUNT_KEY}
+      container_name: tempo-traces
+      endpoint_suffix: blob.core.windows.net
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+ingester:
+  trace_idle_period: 10s
+  max_block_bytes: 1048576
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 72h
+
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://mimir:9009/api/v1/push
+        headers:
+          X-Scope-OrgID: docker-swarm
+
+memberlist:
+  join_members: []
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors:
+        - service-graphs
+        - span-metrics

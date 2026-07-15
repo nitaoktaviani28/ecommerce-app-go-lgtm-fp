@@ -2,64 +2,55 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>AKS A & AKS B Topology</title>
+  <title>AKS Infrastructure Topology</title>
   <style>
-    body {
-      background: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 40px;
-    }
-    .container { width: 100%; max-width: 1400px; }
-    h1 { text-align: center; font-family: 'Segoe UI', sans-serif; color: #1a1a2e; margin-bottom: 30px; font-size: 26px; }
+    body { background: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 60px; }
+    .container { width: 100%; }
+    h1 { text-align: center; font-family: 'Segoe UI', sans-serif; color: #1a1a2e; margin-bottom: 40px; font-size: 28px; font-weight: 600; }
     .mermaid { display: flex; justify-content: center; }
-    .mermaid svg { max-width: 100%; height: auto; min-height: 500px; }
+    .mermaid svg { min-width: 1200px; min-height: 600px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>☸️ AKS A (App) → AKS B (Observability)</h1>
+    <h1>Infrastructure Topology</h1>
     <div class="mermaid">
 graph LR
-    USER["👤 Users"]
+    USER["Users"]
 
-    subgraph AKSA["☸️ AKS A — App Cluster"]
-        FE["🌐 Frontend\n(Vue.js + Faro)"]
-        GW["🔀 API Gateway"]
-        SVC["⚙️ Microservices\n(Product, Order,\nUser, Payment)"]
-        ALLOY_A["📡 Alloy\nCollector"]
+    subgraph AKSA["AKS A : App Cluster"]
+        FE["Frontend<br/>(Vue.js + Faro)"]
+        GW["API Gateway"]
+        SVC["Microservices<br/>(Product, Order,<br/>User, Payment)"]
+        ALLOY_A["Alloy Collector"]
     end
 
-    subgraph AKSB["☸️ AKS B — Observability"]
-        ALLOY_B["📡 Alloy\nReceiver"]
-        L["📜 Loki\n(Logs)"]
-        T["🔗 Tempo\n(Traces)"]
-        M["📊 Mimir\n(Metrics)"]
-        P["🔥 Pyroscope\n(Profiles)"]
-        G["📈 Grafana"]
+    subgraph AKSB["AKS B : Observability"]
+        ALLOY_B["Alloy Receiver"]
+        L["Loki<br/>(Logs)"]
+        T["Tempo<br/>(Traces)"]
+        M["Mimir<br/>(Metrics)"]
+        P["Pyroscope<br/>(Profiles)"]
+        G["Grafana"]
     end
 
-    EMAIL["📧 Email Alert"]
+    EMAIL["Email Alert"]
 
     USER --> FE
     USER --> GW
     FE -.-> GW
     GW --> SVC
 
-    SVC -->|"OTLP"| ALLOY_A
-    GW -->|"OTLP"| ALLOY_A
-    FE -->|"Faro"| ALLOY_B
+    SVC -->|traces| ALLOY_A
+    GW -->|traces| ALLOY_A
+    FE -->|Faro| ALLOY_B
 
-    ALLOY_A -->|"logs"| ALLOY_B
-    ALLOY_A -->|"traces + metrics"| ALLOY_B
-    ALLOY_A -->|"node/pod metrics"| M
+    ALLOY_A -->|logs| ALLOY_B
+    ALLOY_A -->|traces| ALLOY_B
+    ALLOY_A -->|node + pod metrics| M
 
     ALLOY_B --> L
     ALLOY_B --> T
-    ALLOY_B --> M
     ALLOY_B --> P
 
     L --> G
@@ -68,11 +59,11 @@ graph LR
     P --> G
     G --> EMAIL
 
-    style AKSA fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
-    style AKSB fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style USER fill:#f3e5f5,stroke:#7b1fa2
-    style EMAIL fill:#fce4ec,stroke:#c62828
-    style G fill:#f8bbd0,stroke:#c62828,stroke-width:2px
+    style AKSA fill:#e8f0fe,stroke:#4285f4,stroke-width:2px
+    style AKSB fill:#e6f4ea,stroke:#34a853,stroke-width:2px
+    style USER fill:#f3e8fd,stroke:#9334e6
+    style EMAIL fill:#fce8e6,stroke:#ea4335
+    style G fill:#fce8e6,stroke:#ea4335
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
@@ -80,8 +71,8 @@ graph LR
     mermaid.initialize({ 
       startOnLoad: true,
       theme: 'base',
-      themeVariables: { fontSize: '14px', fontFamily: 'Segoe UI, sans-serif' },
-      flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis', nodeSpacing: 50, rankSpacing: 70 }
+      themeVariables: { fontSize: '18px', fontFamily: 'Segoe UI, sans-serif' },
+      flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis', nodeSpacing: 80, rankSpacing: 120, padding: 30 }
     });
   </script>
 </body>

@@ -3,7 +3,7 @@ import json
 import smtplib
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Flask, request, jsonify
@@ -134,10 +134,8 @@ def webhook_alert():
     alert_text = "\n".join(alert_details) if alert_details else "No alert details"
 
     if status == "resolved":
-        # Step 1: Send resolved email notification first
-        _send_resolved_email(title, alert_text, alerts)
-
-        # Step 2: Generate and send AI Incident Summary (in background thread)
+        # Generate and send AI Incident Summary (in background thread)
+        # Resolved email is already sent by Grafana email contact point
         thread = threading.Thread(
             target=_send_ai_incident_summary,
             args=[title, alert_text, alerts],
@@ -145,48 +143,21 @@ def webhook_alert():
         )
         thread.start()
 
-        return jsonify({"status": "ok", "message": "Resolved email sent, AI incident summary generating..."})
+        return jsonify({"status": "ok", "message": "AI incident summary generating..."})
     else:
         # Firing: do nothing here, Grafana email contact point handles firing notification
         logger.info(f"Alert firing received for '{title}' — email handled by Grafana contact point")
         return jsonify({"status": "ok", "message": "Firing alert acknowledged, email sent by Grafana"})
 
 
-def _send_resolved_email(title, alert_text, alerts):
-    """Send resolved notification email immediately."""
-    durations = []
-    for alert in alerts:
-        starts_at = alert.get("startsAt", "")
-        ends_at = alert.get("endsAt", "")
-        if starts_at and ends_at:
-            durations.append(f"Start: {starts_at}<br>End: {ends_at}")
-
-    duration_html = "<br>".join(durations) if durations else "Duration unknown"
-
-    email_subject = f"[RESOLVED] {title} ✅"
-    email_body = f"""
-    <html>
-    <body style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
-        <h2 style="color: #27ae60;">✅ Alert Resolved</h2>
-        <p><strong>Alert:</strong> {title}</p>
-        <p><strong>Status:</strong> RESOLVED</p>
-        <p><strong>Time:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC+7')}</p>
-        <p><strong>Duration:</strong><br>{duration_html}</p>
-        <hr>
-        <h3>Alert Details:</h3>
-        <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px;">{alert_text}</pre>
-        <hr>
-        <p style="color: #666; font-size: 12px;">
-            AI Incident Summary will follow shortly.
-        </p>
-    </body>
-    </html>
-    """
+def _format_to_wib(iso_str):
+    """Convert ISO timestamp to WIB (UTC+7) readable format."""
     try:
-        send_email(email_subject, email_body)
-        logger.info("Resolved email sent successfully")
-    except Exception as e:
-        logger.error(f"Failed to send resolved email: {e}")
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        wib = dt.astimezone(timezone(timedelta(hours=7)))
+        return wib.strftime("%d %B %Y %H:%M WIB")
+    except Exception:
+        return iso_str
 
 
 def _send_ai_incident_summary(title, alert_text, alerts):
@@ -197,7 +168,7 @@ def _send_ai_incident_summary(title, alert_text, alerts):
         starts_at = alert.get("startsAt", "")
         ends_at = alert.get("endsAt", "")
         if starts_at and ends_at:
-            durations.append(f"  Start: {starts_at}, End: {ends_at}")
+            durations.append(f"  Start: {_format_to_wib(starts_at)}, End: {_format_to_wib(ends_at)}")
 
     duration_text = "\n".join(durations) if durations else "Duration unknown"
 
