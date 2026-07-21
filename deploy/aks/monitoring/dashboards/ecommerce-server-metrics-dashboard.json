@@ -1,0 +1,139 @@
+{
+  "annotations": { "list": [] },
+  "description": "Kesehatan server/node: CPU, Memory, Disk, dan Network",
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 100, "title": "Kondisi Server Saat Ini", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] }, "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 }, "id": 1,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
+      "title": "CPU Terpakai", "description": "Persentase prosesor yang sedang bekerja. Hijau=aman, Kuning=mulai sibuk, Merah=overload.", "type": "stat",
+      "targets": [{ "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))) * 100", "legendFormat": "rata-rata" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] }, "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 }, "id": 2,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
+      "title": "RAM Terpakai", "description": "Persentase memory (RAM) yang digunakan. Merah=hampir penuh, aplikasi bisa crash.", "type": "stat",
+      "targets": [{ "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "legendFormat": "{{instance}}" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] }, "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 }, "id": 3,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
+      "title": "Disk Terpakai", "description": "Kapasitas penyimpanan yang sudah terisi. Merah=hampir penuh, perlu cleanup.", "type": "stat",
+      "targets": [{ "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})) * 100", "legendFormat": "{{instance}}" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 15 }] }, "unit": "short" } },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 }, "id": 4,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
+      "title": "Beban Server (Load)", "description": "Antrian proses di CPU. Semakin tinggi = server semakin sibuk.", "type": "stat",
+      "targets": [{ "expr": "node_load1", "legendFormat": "{{instance}}" }]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 }, "id": 101, "title": "CPU - Detail Penggunaan", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 30, "lineWidth": 2, "showPoints": "never", "stacking": { "mode": "normal" } }, "unit": "percent" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 }, "id": 5,
+      "title": "CPU: Pembagian Kerja", "description": "User=aplikasi, System=OS, IOWait=menunggu disk. IOWait tinggi = disk lambat.",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "avg(rate(node_cpu_seconds_total{mode=\"user\"}[5m])) * 100", "legendFormat": "Aplikasi (user)" },
+        { "expr": "avg(rate(node_cpu_seconds_total{mode=\"system\"}[5m])) * 100", "legendFormat": "Sistem (kernel)" },
+        { "expr": "avg(rate(node_cpu_seconds_total{mode=\"iowait\"}[5m])) * 100", "legendFormat": "Menunggu Disk (iowait)" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "unit": "short" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 }, "id": 6,
+      "title": "Beban Server (Load Average)", "description": "Rata-rata antrian proses. Jika lebih tinggi dari jumlah CPU core = server kewalahan.",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "node_load1", "legendFormat": "1 menit {{instance}}" },
+        { "expr": "node_load5", "legendFormat": "5 menit {{instance}}" },
+        { "expr": "node_load15", "legendFormat": "15 menit {{instance}}" }
+      ]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 }, "id": 102, "title": "Memory (RAM)", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 30, "lineWidth": 2, "showPoints": "never", "stacking": { "mode": "normal" } }, "unit": "bytes" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }, "id": 7,
+      "title": "Penggunaan RAM", "description": "Used=terpakai aplikasi, Cached=cache file, Available=masih tersedia.",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes", "legendFormat": "Terpakai" },
+        { "expr": "node_memory_Cached_bytes", "legendFormat": "Cache" },
+        { "expr": "node_memory_MemAvailable_bytes", "legendFormat": "Tersedia" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }, "id": 8,
+      "title": "RAM Terpakai (%)", "description": "Tren penggunaan RAM. Jika terus naik = ada memory leak.",
+      "type": "timeseries",
+      "targets": [{ "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "legendFormat": "{{instance}}" }]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 }, "id": 103, "title": "Disk & Network", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" }, "unit": "Bps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 25 }, "id": 9,
+      "title": "Kecepatan Baca/Tulis Disk", "description": "Seberapa cepat data dibaca dan ditulis ke disk.",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(node_disk_read_bytes_total[5m]))", "legendFormat": "Baca (Read)" },
+        { "expr": "sum(rate(node_disk_written_bytes_total[5m]))", "legendFormat": "Tulis (Write)" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" }, "unit": "Bps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 25 }, "id": 10,
+      "title": "Traffic Jaringan", "description": "Data yang masuk (download) dan keluar (upload) dari server.",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]))", "legendFormat": "Masuk (Download)" },
+        { "expr": "sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))", "legendFormat": "Keluar (Upload)" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" }, "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 33 }, "id": 11,
+      "title": "Kapasitas Disk (%)", "description": "Seberapa penuh penyimpanan. Jika mendekati 100% server bisa berhenti.",
+      "type": "timeseries",
+      "targets": [{ "expr": "(1 - (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"})) * 100", "legendFormat": "{{mountpoint}}" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "unit": "short" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 33 }, "id": 12,
+      "title": "Koneksi Aktif", "description": "Jumlah koneksi TCP yang sedang aktif ke server.",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "node_filefd_allocated", "legendFormat": "File Descriptors" },
+        { "expr": "node_netstat_Tcp_CurrEstab", "legendFormat": "Koneksi TCP" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["server", "infrastructure"],
+  "templating": { "list": [
+    { "current": {}, "hide": 0, "includeAll": false, "label": "Datasource", "multi": false, "name": "datasource", "options": [], "query": "prometheus", "refresh": 1, "type": "datasource" }
+  ] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "E-Commerce - Server Metrics",
+  "uid": "ecommerce-server-metrics",
+  "version": 1
+}

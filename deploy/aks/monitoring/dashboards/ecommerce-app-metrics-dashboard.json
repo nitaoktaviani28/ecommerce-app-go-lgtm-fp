@@ -1,1132 +1,145 @@
 {
-  "annotations": {
-    "list": []
-  },
-  "description": "E-Commerce Application Metrics Dashboard - HTTP, Latency, Error Rate, and Resource Usage",
+  "annotations": { "list": [] },
+  "description": "E-Commerce Application HTTP Metrics",
   "editable": true,
-  "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "links": [],
   "panels": [
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 100, "title": "Overview", "type": "row" },
     {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
-      "id": 100,
-      "title": "Overview",
-      "type": "row"
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 50 }, { "color": "red", "value": 100 }] }, "unit": "reqps" } },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 }, "id": 1,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "title": "Total Request Rate", "type": "stat",
+      "targets": [{ "expr": "sum(rate(http_server_duration_milliseconds_count{job=~\"$service\"}[$__rate_interval]))", "legendFormat": "req/s" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 50 },
-              { "color": "red", "value": 100 }
-            ]
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
-      "id": 1,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
-      "title": "Total Request Rate",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval]))",
-          "legendFormat": "req/s"
-        }
-      ]
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }, "unit": "percent" } },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 }, "id": 2,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "title": "Error Rate (5xx)", "type": "stat",
+      "targets": [{ "expr": "sum(rate(http_server_duration_milliseconds_count{job=~\"$service\", http_status_code=~\"5..\"}[$__rate_interval])) / sum(rate(http_server_duration_milliseconds_count{job=~\"$service\"}[$__rate_interval])) * 100", "legendFormat": "error %" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1 },
-              { "color": "red", "value": 5 }
-            ]
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
-      "id": 2,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
-      "title": "Error Rate (5xx)",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\", http_response_status_code=~\"5..\"}[$__rate_interval])) / sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval])) * 100",
-          "legendFormat": "error %"
-        }
-      ]
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 500 }, { "color": "red", "value": 1000 }] }, "unit": "ms" } },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 }, "id": 3,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "title": "Avg Latency (P50)", "type": "stat",
+      "targets": [{ "expr": "histogram_quantile(0.50, sum(rate(http_server_duration_milliseconds_bucket{job=~\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "p50" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.5 },
-              { "color": "red", "value": 1 }
-            ]
-          },
-          "unit": "s"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
-      "id": 3,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
-      "title": "Avg Latency (P50)",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.50, sum(rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p50"
-        }
-      ]
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1000 }, { "color": "red", "value": 3000 }] }, "unit": "ms" } },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 }, "id": 4,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+      "title": "P99 Latency", "type": "stat",
+      "targets": [{ "expr": "histogram_quantile(0.99, sum(rate(http_server_duration_milliseconds_bucket{job=~\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "p99" }]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 }, "id": 101, "title": "Request Rate", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never", "stacking": { "mode": "none" } }, "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }, "id": 5,
+      "title": "Request Rate by Service", "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(http_server_duration_milliseconds_count{job=~\"$service\"}[$__rate_interval])) by (job)", "legendFormat": "{{job}}" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1 },
-              { "color": "red", "value": 3 }
-            ]
-          },
-          "unit": "s"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
-      "id": 4,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
-      "title": "P99 Latency",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p99"
-        }
-      ]
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "bars", "fillOpacity": 80, "lineWidth": 1, "showPoints": "never", "stacking": { "mode": "normal" } }, "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }, "id": 6,
+      "title": "Request Rate by Status Code", "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(http_server_duration_milliseconds_count{job=~\"$service\"}[$__rate_interval])) by (http_status_code)", "legendFormat": "HTTP {{http_status_code}}" }]
     },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 }, "id": 102, "title": "Latency", "type": "row" },
     {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
-      "id": 101,
-      "title": "HTTP Request Rate by Service",
-      "type": "row"
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "unit": "ms" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 }, "id": 7,
+      "title": "Latency P95 by Service", "type": "timeseries",
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=~\"$service\"}[$__rate_interval])) by (le, job))", "legendFormat": "{{job}}" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "req/s",
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "id": 5,
-      "title": "Request Rate by Service",
-      "type": "timeseries",
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "unit": "ms" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 }, "id": 8,
+      "title": "Latency Percentiles", "type": "timeseries",
       "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval])) by (service_name)",
-          "legendFormat": "{{service_name}}"
-        }
+        { "expr": "histogram_quantile(0.50, sum(rate(http_server_duration_milliseconds_bucket{job=~\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.90, sum(rate(http_server_duration_milliseconds_bucket{job=~\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "p90" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=~\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(http_server_duration_milliseconds_bucket{job=~\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "p99" }
       ]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 }, "id": 103, "title": "Per-Service Breakdown", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never" }, "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 26 }, "id": 9,
+      "title": "API Gateway", "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"api-gateway\"}[$__rate_interval])) by (http_status_code)", "legendFormat": "{{http_status_code}}" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "req/s",
-            "drawStyle": "bars",
-            "fillOpacity": 80,
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "normal" }
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "id": 6,
-      "title": "Request Rate by Status Code",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval])) by (http_response_status_code)",
-          "legendFormat": "HTTP {{http_response_status_code}}"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
-      "id": 102,
-      "title": "Latency",
-      "type": "row"
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never" }, "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 26 }, "id": 10,
+      "title": "Product Service", "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"product-service\"}[$__rate_interval])) by (http_status_code)", "legendFormat": "{{http_status_code}}" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "duration",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "s"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
-      "id": 7,
-      "title": "Request Duration by Service (P95)",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le, service_name))",
-          "legendFormat": "{{service_name}} p95"
-        }
-      ]
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never" }, "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 26 }, "id": 11,
+      "title": "Order Service", "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"order-service\"}[$__rate_interval])) by (http_status_code)", "legendFormat": "{{http_status_code}}" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "duration",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "s"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
-      "id": 8,
-      "title": "Request Duration Percentiles (All Services)",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.50, sum(rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p50"
-        },
-        {
-          "expr": "histogram_quantile(0.90, sum(rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p90"
-        },
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p95"
-        },
-        {
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le))",
-          "legendFormat": "p99"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
-      "id": 103,
-      "title": "HTTP Details",
-      "type": "row"
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never" }, "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 34 }, "id": 12,
+      "title": "Payment Service", "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"payment-service\"}[$__rate_interval])) by (http_status_code)", "legendFormat": "{{http_status_code}}" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "req/s",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
-      "id": 9,
-      "title": "Request Rate by Method & Route",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval])) by (http_request_method, http_route)",
-          "legendFormat": "{{http_request_method}} {{http_route}}"
-        }
-      ]
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never" }, "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 34 }, "id": 13,
+      "title": "User Service", "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"user-service\"}[$__rate_interval])) by (http_status_code)", "legendFormat": "{{http_status_code}}" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "requests",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
-      "id": 10,
-      "title": "Active Requests (In-Flight)",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(http_server_active_requests{service_name=~\"$service\"}) by (service_name)",
-          "legendFormat": "{{service_name}}"
-        }
-      ]
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "unit": "ms" } },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 34 }, "id": 14,
+      "title": "Latency P95 per Service", "type": "timeseries",
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{job=~\"$service\"}[$__rate_interval])) by (le, job))", "legendFormat": "{{job}}" }]
     },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 42 }, "id": 104, "title": "Throughput", "type": "row" },
     {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
-      "id": 104,
-      "title": "Request/Response Size",
-      "type": "row"
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "unit": "Bps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 43 }, "id": 15,
+      "title": "Request Size (bytes/s)", "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(http_server_request_size_bytes_total{job=~\"$service\"}[$__rate_interval])) by (job)", "legendFormat": "{{job}}" }]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "size",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "bytes"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 35 },
-      "id": 11,
-      "title": "Request Body Size (P95)",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_body_size_bytes_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le, service_name))",
-          "legendFormat": "{{service_name}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "size",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "bytes"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 35 },
-      "id": 12,
-      "title": "Response Body Size (P95)",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_response_body_size_bytes_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le, service_name))",
-          "legendFormat": "{{service_name}}"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
-      "id": 105,
-      "title": "Per-Service Breakdown",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 44 },
-      "id": 13,
-      "title": "API Gateway - Request Rate",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"api-gateway\"}[$__rate_interval])) by (http_response_status_code)",
-          "legendFormat": "HTTP {{http_response_status_code}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 44 },
-      "id": 14,
-      "title": "Product Service - Request Rate",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"product-service\"}[$__rate_interval])) by (http_response_status_code)",
-          "legendFormat": "HTTP {{http_response_status_code}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 44 },
-      "id": 15,
-      "title": "Order Service - Request Rate",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"order-service\"}[$__rate_interval])) by (http_response_status_code)",
-          "legendFormat": "HTTP {{http_response_status_code}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 52 },
-      "id": 16,
-      "title": "Payment Service - Request Rate",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"payment-service\"}[$__rate_interval])) by (http_response_status_code)",
-          "legendFormat": "HTTP {{http_response_status_code}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 52 },
-      "id": 17,
-      "title": "User Service - Request Rate",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"user-service\"}[$__rate_interval])) by (http_response_status_code)",
-          "legendFormat": "HTTP {{http_response_status_code}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "s"
-        }
-      },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 52 },
-      "id": 18,
-      "title": "Latency P95 per Service",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])) by (le, service_name))",
-          "legendFormat": "{{service_name}}"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 60 },
-      "id": 106,
-      "title": "Container Resources (cAdvisor)",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "CPU cores",
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 61 },
-      "id": 19,
-      "title": "Container CPU Usage",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"ecommerce\"}[$__rate_interval])) by (pod)",
-          "legendFormat": "{{pod}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "memory",
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "bytes"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 61 },
-      "id": 20,
-      "title": "Container Memory Usage",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(container_memory_working_set_bytes{namespace=\"ecommerce\"}) by (pod)",
-          "legendFormat": "{{pod}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "bytes/s",
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "Bps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 69 },
-      "id": 21,
-      "title": "Container Network RX",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"ecommerce\"}[$__rate_interval])) by (pod)",
-          "legendFormat": "{{pod}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "bytes/s",
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "Bps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 69 },
-      "id": 22,
-      "title": "Container Network TX",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"ecommerce\"}[$__rate_interval])) by (pod)",
-          "legendFormat": "{{pod}}"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 77 },
-      "id": 107,
-      "title": "Server / Node Metrics",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 70 },
-              { "color": "red", "value": 90 }
-            ]
-          },
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 78 },
-      "id": 23,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
-      "title": "Node CPU Usage %",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval]))) * 100",
-          "legendFormat": "{{instance}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 70 },
-              { "color": "red", "value": 90 }
-            ]
-          },
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 78 },
-      "id": 24,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
-      "title": "Node Memory Usage %",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-          "legendFormat": "Mem %"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 70 },
-              { "color": "red", "value": 90 }
-            ]
-          },
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 78 },
-      "id": 25,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
-      "title": "Node Disk Usage %",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})) * 100",
-          "legendFormat": "Disk %"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 5 },
-              { "color": "red", "value": 15 }
-            ]
-          },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 78 },
-      "id": 26,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
-      "title": "Node Load Average (1m)",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "node_load1",
-          "legendFormat": "load1"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "CPU %",
-            "drawStyle": "line",
-            "fillOpacity": 30,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "normal" }
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 84 },
-      "id": 27,
-      "title": "Node CPU Usage by Mode",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (instance) (rate(node_cpu_seconds_total{mode=\"user\"}[$__rate_interval])) / on(instance) group_left count by (instance) (node_cpu_seconds_total{mode=\"idle\"}) * 100",
-          "legendFormat": "user {{instance}}"
-        },
-        {
-          "expr": "sum by (instance) (rate(node_cpu_seconds_total{mode=\"system\"}[$__rate_interval])) / on(instance) group_left count by (instance) (node_cpu_seconds_total{mode=\"idle\"}) * 100",
-          "legendFormat": "system {{instance}}"
-        },
-        {
-          "expr": "sum by (instance) (rate(node_cpu_seconds_total{mode=\"iowait\"}[$__rate_interval])) / on(instance) group_left count by (instance) (node_cpu_seconds_total{mode=\"idle\"}) * 100",
-          "legendFormat": "iowait {{instance}}"
-        },
-        {
-          "expr": "sum by (instance) (rate(node_cpu_seconds_total{mode=\"steal\"}[$__rate_interval])) / on(instance) group_left count by (instance) (node_cpu_seconds_total{mode=\"idle\"}) * 100",
-          "legendFormat": "steal {{instance}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "memory",
-            "drawStyle": "line",
-            "fillOpacity": 30,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "normal" }
-          },
-          "unit": "bytes"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 84 },
-      "id": 28,
-      "title": "Node Memory Breakdown",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
-          "legendFormat": "Used"
-        },
-        {
-          "expr": "node_memory_Buffers_bytes",
-          "legendFormat": "Buffers"
-        },
-        {
-          "expr": "node_memory_Cached_bytes",
-          "legendFormat": "Cached"
-        },
-        {
-          "expr": "node_memory_MemAvailable_bytes",
-          "legendFormat": "Available"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "bytes/s",
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "Bps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 92 },
-      "id": 29,
-      "title": "Node Disk I/O",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(node_disk_read_bytes_total[$__rate_interval]))",
-          "legendFormat": "Read"
-        },
-        {
-          "expr": "sum(rate(node_disk_written_bytes_total[$__rate_interval]))",
-          "legendFormat": "Write"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "bytes/s",
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "Bps"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 92 },
-      "id": 30,
-      "title": "Node Network Traffic",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[$__rate_interval]))",
-          "legendFormat": "Receive"
-        },
-        {
-          "expr": "sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[$__rate_interval]))",
-          "legendFormat": "Transmit"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "percentage",
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 100 },
-      "id": 31,
-      "title": "Node Filesystem Usage %",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "(1 - (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"})) * 100",
-          "legendFormat": "{{mountpoint}}"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource_infra}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "open FDs",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "stacking": { "mode": "none" }
-          },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 100 },
-      "id": 32,
-      "title": "Node File Descriptors & Connections",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "node_filefd_allocated",
-          "legendFormat": "Open File Descriptors"
-        },
-        {
-          "expr": "node_netstat_Tcp_CurrEstab",
-          "legendFormat": "TCP Established"
-        }
-      ]
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "unit": "Bps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 43 }, "id": 16,
+      "title": "Response Size (bytes/s)", "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(http_server_response_size_bytes_total{job=~\"$service\"}[$__rate_interval])) by (job)", "legendFormat": "{{job}}" }]
     }
   ],
   "schemaVersion": 39,
-  "tags": ["ecommerce", "otelhttp", "go", "microservices"],
-  "templating": {
-    "list": [
-      {
-        "current": {},
-        "hide": 0,
-        "includeAll": false,
-        "label": "Datasource (Pods)",
-        "multi": false,
-        "name": "datasource",
-        "options": [],
-        "query": "prometheus",
-        "refresh": 1,
-        "type": "datasource"
-      },
-      {
-        "current": {},
-        "hide": 0,
-        "includeAll": false,
-        "label": "Datasource (Nodes)",
-        "multi": false,
-        "name": "datasource_infra",
-        "options": [],
-        "query": "prometheus",
-        "refresh": 1,
-        "type": "datasource"
-      },
-      {
-        "current": { "selected": true, "text": "All", "value": "$__all" },
-        "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(http_server_request_duration_seconds_count, service_name)",
-        "hide": 0,
-        "includeAll": true,
-        "label": "Service",
-        "multi": true,
-        "name": "service",
-        "query": "label_values(http_server_request_duration_seconds_count, service_name)",
-        "refresh": 2,
-        "sort": 1,
-        "type": "query"
-      }
-    ]
-  },
+  "tags": ["ecommerce", "application", "http"],
+  "templating": { "list": [
+    { "current": {}, "hide": 0, "includeAll": false, "label": "Datasource", "multi": false, "name": "datasource", "options": [], "query": "prometheus", "refresh": 1, "type": "datasource" },
+    { "current": { "selected": true, "text": "All", "value": "$__all" }, "datasource": { "type": "prometheus", "uid": "${datasource}" }, "definition": "label_values(http_server_duration_milliseconds_count, job)", "hide": 0, "includeAll": true, "label": "Service", "multi": true, "name": "service", "query": "label_values(http_server_duration_milliseconds_count, job)", "refresh": 2, "sort": 1, "type": "query" }
+  ] },
   "time": { "from": "now-1h", "to": "now" },
-  "timepicker": {},
   "timezone": "browser",
-  "title": "E-Commerce App - Service Metrics",
+  "title": "E-Commerce App - Application Metrics",
   "uid": "ecommerce-app-metrics",
   "version": 1
 }

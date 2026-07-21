@@ -22,7 +22,7 @@ spec:
         - name: VITE_API_URL
           value: "http://20.198.185.121:8080/api"
         - name: VITE_FARO_COLLECTOR_URL
-          value: "http://4.144.161.30:12347/collect"
+          value: "http://135.171.20.224:12347/collect"
         livenessProbe:
           httpGet:
             path: /

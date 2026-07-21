@@ -1,0 +1,18 @@
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: email-notifications
+    receivers:
+      - uid: email-notif-aks-1
+        type: email
+        settings:
+          addresses: nitaoktaviani2005@gmail.com
+          singleEmail: true
+  - orgId: 1
+    name: ai-incident-summary
+    receivers:
+      - uid: ai-webhook-aks-1
+        type: webhook
+        settings:
+          url: http://bedrock-proxy.ecommerce.svc.cluster.local:4000/webhook/alert
+          httpMethod: POST

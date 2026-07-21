@@ -1,4 +1,4 @@
-{
+﻿{
   "annotations": {
     "list": [
       {
@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Grafana Faro RUM Dashboard v6 — Ecommerce (With Error Tracking)",
+  "description": "Grafana Faro RUM Dashboard v6 â€” Ecommerce (With Error Tracking)",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -90,7 +90,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum(count_over_time({source=\"faro\"} | logfmt [$__range]))",
+          "expr": "sum(count_over_time({source=\"frontend\"} | logfmt [$__range]))",
           "instant": true,
           "refId": "A"
         }
@@ -154,12 +154,12 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum(count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=\"add_to_cart\" [$__range]))",
+          "expr": "sum(count_over_time({source=\"frontend\"} | logfmt | kind=~\"event\" | event_name=~\"faro.tracing.*\" [$__range]))",
           "instant": true,
           "refId": "A"
         }
       ],
-      "title": "Add to Cart",
+      "title": "HTTP Requests",
       "type": "stat"
     },
     {
@@ -218,12 +218,12 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum(count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=\"checkout_completed\" [$__range]))",
+          "expr": "sum(count_over_time({source=\"frontend\"} | logfmt | kind=~\"measurement\" [$__range]))",
           "instant": true,
           "refId": "A"
         }
       ],
-      "title": "Checkout Completed",
+      "title": "Web Vitals",
       "type": "stat"
     },
     {
@@ -282,12 +282,12 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum(count_over_time({source=\"faro\"} | logfmt | kind=\"exception\" [$__range]))",
+          "expr": "sum(count_over_time({source=\"frontend\"} | logfmt | kind=~\"exception|log\" [$__range]))",
           "instant": true,
           "refId": "A"
         }
       ],
-      "title": "Errors & Exceptions",
+      "title": "Logs & Exceptions",
       "type": "stat"
     },
     {
@@ -391,7 +391,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum by (event_name) (count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"add_to_cart|checkout_completed|session_extend\" [$__interval]))",
+          "expr": "sum by (event_name) (count_over_time({source=\"frontend\"} | logfmt | kind=~\"event\" [$__interval]))",
           "legendFormat": "{{event_name}}",
           "refId": "A"
         }
@@ -460,12 +460,12 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum by (event_name) (count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"add_to_cart|checkout_completed\" [$__range]))",
+          "expr": "sum by (event_name) (count_over_time({source=\"frontend\"} | logfmt | kind=~\"event\" [$__range]))",
           "legendFormat": "{{event_name}}",
           "refId": "A"
         }
       ],
-      "title": "Conversion Distribution",
+      "title": "Event Distribution",
       "type": "piechart"
     },
     {
@@ -568,7 +568,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum by (event_data_http_status_code) (count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"faro.tracing.xml-http-request\" | event_data_http_status_code=~\"[4-5][0-9]{2}\" [$__interval]))",
+          "expr": "sum by (event_data_http_status_code) (count_over_time({source=\"frontend\"} | logfmt | kind=~\"event\" | event_name=~\"faro.tracing.*\" | event_data_http_status_code=~\"[4-5][0-9]{2}\" [$__interval]))",
           "legendFormat": "Status {{event_data_http_status_code}}",
           "refId": "A"
         }
@@ -637,7 +637,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum by (event_data_http_status_code) (count_over_time({source=\"faro\"} | logfmt | kind=\"event\" | event_name=~\"faro.tracing.xml-http-request\" [$__range]))",
+          "expr": "sum by (event_data_http_status_code) (count_over_time({source=\"frontend\"} | logfmt | kind=~\"event\" | event_name=~\"faro.tracing.*\" [$__range]))",
           "legendFormat": "Status {{event_data_http_status_code}}",
           "refId": "A"
         }
@@ -719,7 +719,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum by (browser_name) (count_over_time({source=\"faro\"} | logfmt | browser_name!=\"\" [$__range]))",
+          "expr": "sum by (browser_name) (count_over_time({source=\"frontend\"} | logfmt | browser_name!=\"\" [$__range]))",
           "legendFormat": "{{browser_name}}",
           "refId": "A"
         }
@@ -788,7 +788,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum by (browser_os) (count_over_time({source=\"faro\"} | logfmt | browser_os!=\"\" [$__range]))",
+          "expr": "sum by (browser_os) (count_over_time({source=\"frontend\"} | logfmt | browser_os!=\"\" [$__range]))",
           "legendFormat": "{{browser_os}}",
           "refId": "A"
         }
@@ -800,23 +800,6 @@
       "datasource": {
         "type": "loki",
         "uid": "${datasource_loki}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          },
-          "mappings": [],
-          "unit": "short"
-        },
-        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -857,12 +840,12 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum by (browser_mobile) (count_over_time({source=\"faro\"} | logfmt | browser_mobile!=\"\" [$__range]))",
+          "expr": "sum by (browser_mobile) (count_over_time({source=\"frontend\"} | logfmt | browser_mobile!=\"\" [$__range]))",
           "legendFormat": "{{browser_mobile}}",
           "refId": "A"
         }
       ],
-      "title": "Mobile (blue) vs Desktop (red)",
+      "title": "Mobile vs Desktop",
       "type": "piechart",
       "fieldConfig": {
         "defaults": {
@@ -877,19 +860,19 @@
             }
           },
           "mappings": [
-            {"options": {"false": {"text": "🖥️ Desktop"}}, "type": "value"},
-            {"options": {"true": {"text": "📱 Mobile"}}, "type": "value"}
+            {"options": {"false": {"text": "ðŸ–¥ï¸ Desktop"}}, "type": "value"},
+            {"options": {"true": {"text": "ðŸ“± Mobile"}}, "type": "value"}
           ],
           "unit": "short"
         },
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "false"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#ef4444", "mode": "fixed"}}, {"id": "displayName", "value": "🖥️ Desktop"}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#ef4444", "mode": "fixed"}}, {"id": "displayName", "value": "ðŸ–¥ï¸ Desktop"}]
           },
           {
             "matcher": {"id": "byName", "options": "true"},
-            "properties": [{"id": "color", "value": {"fixedColor": "#3b82f6", "mode": "fixed"}}, {"id": "displayName", "value": "📱 Mobile"}]
+            "properties": [{"id": "color", "value": {"fixedColor": "#3b82f6", "mode": "fixed"}}, {"id": "displayName", "value": "ðŸ“± Mobile"}]
           }
         ]
       }
@@ -968,7 +951,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum by (kind) (count_over_time({source=\"faro\"} | logfmt | kind!=\"\" [$__range]))",
+          "expr": "sum by (kind) (count_over_time({source=\"frontend\"} | logfmt | kind!=\"\" [$__range]))",
           "legendFormat": "{{kind}}",
           "refId": "A"
         }
@@ -1037,7 +1020,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "sum by (app_name) (count_over_time({source=\"faro\"} | logfmt | app_name!=\"\" [$__range]))",
+          "expr": "sum by (app_name) (count_over_time({source=\"frontend\"} | logfmt | app_name!=\"\" [$__range]))",
           "legendFormat": "{{app_name}}",
           "refId": "A"
         }
@@ -1093,7 +1076,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "{source=\"faro\"} | logfmt | kind=\"event\"",
+          "expr": "{source=\"frontend\"} | logfmt | kind=~\"event\"",
           "refId": "A"
         }
       ],
@@ -1135,7 +1118,7 @@
             "type": "loki",
             "uid": "${datasource_loki}"
           },
-          "expr": "{source=\"faro\"} | logfmt | (kind=\"exception\" or event_data_http_status_code=~\"[4-5][0-9]{2}\")",
+          "expr": "{source=\"frontend\"} | logfmt | (kind=~\"exception|log\" or event_data_http_status_code=~\"[4-5][0-9]{2}\")",
           "refId": "A"
         }
       ],
@@ -1179,3 +1162,4 @@
   "uid": "faro-ecommerce-v6",
   "version": 5
 }
+

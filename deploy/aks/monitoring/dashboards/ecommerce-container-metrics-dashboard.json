@@ -1,0 +1,142 @@
+{
+  "annotations": { "list": [] },
+  "description": "Monitoring container: jumlah, resource usage, dan kesehatan",
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 100, "title": "Ringkasan Container", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] }, "unit": "short" } },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 1 }, "id": 1,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
+      "title": "Total Container", "description": "Jumlah container yang sedang berjalan.", "type": "stat",
+      "targets": [{ "expr": "count(container_last_seen{namespace=~\"$namespace\", pod=~\".+\"})", "legendFormat": "running" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "purple", "value": null }] }, "unit": "short" } },
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 1 }, "id": 14,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
+      "title": "Total Deployment", "description": "Jumlah deployment yang aktif di namespace.", "type": "stat",
+      "targets": [{ "expr": "count(kube_deployment_spec_replicas{namespace=~\"$namespace\"})", "legendFormat": "deployment" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }, "unit": "short" } },
+      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 1 }, "id": 2,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
+      "title": "Container Crash", "description": "Container yang kehabisan memory dan di-restart paksa (OOM Kill). Hijau=0 aman.", "type": "stat",
+      "targets": [{ "expr": "sum(increase(container_oom_events_total{namespace=~\"$namespace\"}[1h])) or vector(0)", "legendFormat": "dalam 1 jam" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }, "unit": "short" } },
+      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 1 }, "id": 3,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
+      "title": "CPU Terlimit", "description": "Container yang dilambatkan karena melebihi batas CPU.", "type": "stat",
+      "targets": [{ "expr": "count(sum(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\"}[$__rate_interval])) by (pod) > 0.1) or vector(0)", "legendFormat": "pod" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 1 }, "id": 4,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
+      "title": "Jumlah Namespace", "description": "Namespace = grup/kategori container.", "type": "stat",
+      "targets": [{ "expr": "count(count(container_last_seen{pod=~\".+\"}) by (namespace))", "legendFormat": "total" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 1 }, "id": 5,
+      "options": { "legend": { "displayMode": "table", "placement": "right" }, "pieType": "donut", "reduceOptions": { "calcs": ["lastNotNull"] }, "tooltip": { "mode": "single" } },
+      "title": "Distribusi per Namespace", "description": "Berapa container di setiap namespace/grup.", "type": "piechart",
+      "targets": [{ "expr": "count(container_last_seen{namespace=~\"$namespace\", pod=~\".+\"}) by (namespace)", "legendFormat": "{{namespace}}" }]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 }, "id": 101, "title": "Top Resource Consumers", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "continuous-BlYlRd" }, "custom": { "align": "auto", "displayMode": "color-background-solid", "filterable": true }, "unit": "suffix:m", "decimals": 1 } },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 7 }, "id": 6,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "CPU (cores)" }] },
+      "title": "Top 10 - Pemakaian CPU Tertinggi", "description": "Container yang paling banyak memakai prosesor dalam millicores (m).",
+      "type": "table",
+      "targets": [{ "expr": "topk(10, sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\"}[$__rate_interval])) by (pod)) * 1000", "legendFormat": "{{pod}}", "format": "table", "instant": true }],
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "pod": "Container", "Value": "CPU (millicores)" } } }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "continuous-BlYlRd" }, "custom": { "align": "auto", "displayMode": "color-background-solid", "filterable": true }, "unit": "bytes" } },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 7 }, "id": 7,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "Memory" }] },
+      "title": "Top 10 - Pemakaian RAM Tertinggi", "description": "Container yang paling banyak memakai RAM. Jika mendekati limit bisa crash.",
+      "type": "table",
+      "targets": [{ "expr": "topk(10, sum(container_memory_working_set_bytes{namespace=~\"$namespace\"}) by (pod))", "legendFormat": "{{pod}}", "format": "table", "instant": true }],
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "pod": "Container", "Value": "Memory" } } }]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 }, "id": 102, "title": "Pemakaian CPU", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" }, "unit": "suffix:m", "decimals": 0 } },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 17 }, "id": 8,
+      "title": "CPU per Container (millicores)", "description": "Pemakaian CPU setiap container dalam millicores. 1000m = 1 core penuh.",
+      "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod) * 1000", "legendFormat": "{{pod}}" }]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 }, "id": 103, "title": "Pemakaian Memory", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" }, "unit": "bytes" } },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 26 }, "id": 9,
+      "title": "RAM per Container", "description": "Pemakaian RAM setiap container. Jika terus naik tanpa turun = kemungkinan memory leak.",
+      "type": "timeseries",
+      "targets": [{ "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$pod\"}) by (pod)", "legendFormat": "{{pod}}" }]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 }, "id": 104, "title": "Network", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" }, "unit": "Bps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 35 }, "id": 10,
+      "title": "Data Masuk per Container", "description": "Traffic yang diterima setiap container.",
+      "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod)", "legendFormat": "{{pod}}" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" }, "unit": "Bps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 35 }, "id": 11,
+      "title": "Data Keluar per Container", "description": "Traffic yang dikirim setiap container.",
+      "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(container_network_transmit_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod)", "legendFormat": "{{pod}}" }]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 }, "id": 105, "title": "Kesehatan & Masalah", "type": "row" },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "points", "fillOpacity": 0, "lineWidth": 0, "pointSize": 10, "showPoints": "always" }, "unit": "short" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 }, "id": 12,
+      "title": "Container Crash (OOM Kill)", "description": "Setiap titik = container kehabisan memory dan mati. Idealnya grafik ini KOSONG.",
+      "type": "timeseries",
+      "targets": [{ "expr": "sum(increase(container_oom_events_total{namespace=~\"$namespace\", pod=~\"$pod\"}[5m])) by (pod) > 0", "legendFormat": "{{pod}}" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "unit": "short" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 }, "id": 13,
+      "title": "CPU Throttling", "description": "Container yang CPU-nya dibatasi karena melebihi quota. Semakin tinggi = perlu tambah resource.",
+      "type": "timeseries",
+      "targets": [{ "expr": "sum(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod) > 0", "legendFormat": "{{pod}}" }]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["container", "kubernetes"],
+  "templating": { "list": [
+    { "current": {}, "hide": 0, "includeAll": false, "label": "Datasource", "multi": false, "name": "datasource", "options": [], "query": "prometheus", "refresh": 1, "type": "datasource" },
+    { "current": { "selected": true, "text": "ecommerce", "value": "ecommerce" }, "datasource": { "type": "prometheus", "uid": "${datasource}" }, "definition": "label_values(container_cpu_usage_seconds_total, namespace)", "hide": 0, "includeAll": true, "label": "Namespace", "multi": true, "name": "namespace", "query": "label_values(container_cpu_usage_seconds_total, namespace)", "refresh": 2, "sort": 1, "type": "query" },
+    { "current": { "selected": true, "text": "All", "value": "$__all" }, "datasource": { "type": "prometheus", "uid": "${datasource}" }, "definition": "label_values(container_cpu_usage_seconds_total{namespace=~\"$namespace\"}, pod)", "hide": 0, "includeAll": true, "label": "Pod", "multi": true, "name": "pod", "query": "label_values(container_cpu_usage_seconds_total{namespace=~\"$namespace\"}, pod)", "refresh": 2, "sort": 1, "type": "query" }
+  ] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "E-Commerce - Container Metrics",
+  "uid": "ecommerce-container-metrics",
+  "version": 1
+}

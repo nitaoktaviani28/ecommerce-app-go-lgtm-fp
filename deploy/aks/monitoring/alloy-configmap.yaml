@@ -329,3 +329,33 @@ data:
       }
       forward_to = [loki.write.loki.receiver]
     }
+
+    discovery.kubernetes "services" {
+      role = "service"
+      namespaces {
+        names = ["monitoring"]
+      }
+    }
+
+    discovery.relabel "kube_state_metrics" {
+      targets = discovery.kubernetes.services.targets
+      rule {
+        source_labels = ["__meta_kubernetes_service_name"]
+        regex         = "kube-state-metrics"
+        action        = "keep"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_port_name"]
+        regex         = "http"
+        action        = "keep"
+      }
+      rule {
+        target_label = "job"
+        replacement  = "kube-state-metrics"
+      }
+    }
+
+    prometheus.scrape "kube_state_metrics" {
+      targets    = discovery.relabel.kube_state_metrics.output
+      forward_to = [prometheus.remote_write.mimir_pods.receiver]
+    }

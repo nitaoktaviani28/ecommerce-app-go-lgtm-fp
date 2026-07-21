@@ -1,5 +1,7 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "description": "Monitoring penggunaan Azure Blob Storage untuk semua project LGTM stack. Menampilkan informasi customer, project, dan storage account.",
   "editable": true,
   "fiscalYearStartMonth": 0,
@@ -9,7 +11,12 @@
   "panels": [
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 200,
       "title": "Project & Storage Account Registry",
       "type": "row"
@@ -17,43 +24,73 @@
     {
       "type": "text",
       "title": "Storage Account Inventory",
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 1 },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
       "id": 202,
       "options": {
         "mode": "markdown",
-        "content": "| # | Customer | Project | Env | Storage Account | Containers | Subscription |\n|---|----------|---------|-----|-----------------|------------|--------|\n| 1 | **CMP** | app-cmp | Prod | `blobstoragelgtm` | `loki` `mimir-blocks` `mimir-alertmanager` `mimir-ruler` `tempo-traces` | Observability |\n| 2 | **Ecommerce** | ecommerce-app-01 | Prod | `blobstoragelgtm01` | `loki` `mimir-blocks` `mimir-alertmanager` `mimir-ruler` `pyroscope-data` `tempo-traces` | VS Enterprise |\n| 3 | **Ecommerce** | ecommerce-app-02 | Demo | `blobstoragelgtmfp` | `loki` `mimir-blocks` `mimir-alertmanager` `mimir-ruler` `pyroscope-data` `tempo-traces` | VS Enterprise |"
+        "content": "| # | Customer | Project | Env | Storage Account | Containers | Subscription |\n|---|----------|---------|-----|-----------------|------------|--------|\n| 1 | **CMP** | app-cmp | Prod | `blobstoragelgtm` | `loki` `mimir-blocks` `mimir-alertmanager` `mimir-ruler` `tempo-traces` | Observability |\n| 2 | **Ecommerce** | ecommerce-app-01 | Prod | `blobstoragelgtm01` | `loki` `mimir-blocks` `mimir-alertmanager` `mimir-ruler` `pyroscope-data` `tempo-traces` | VS Enterprise |\n| 3 | **Ecommerce** | ecommerce-app-02 | Demo | `blobstoragelgtmfp` | `loki` `mimir-blocks` `mimir-alertmanager` `mimir-ruler` `pyroscope-data` `tempo-traces` | VS Enterprise |\n\n---\n**Pricing**\n\n| Komponen | Harga |\n|----------|-------|\n| **Harga Jual ke Customer** | Rp 20.000/GB/bulan |\n| **Cost Azure (Hot LRS, SE Asia)** | $0.02/GB/bulan (~Rp 330/GB) |\n\n> **Rumus billing**: Capacity_GB x Rp 20.000/bulan"
       }
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
       "id": 100,
       "title": "Total Storage Usage Overview",
       "type": "row"
     },
     {
-      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "azure-monitor-obs" },
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "azure-monitor-obs"
+      },
       "title": "CMP / app-cmp",
       "description": "Customer: CMP\nProject: app-cmp\nStorage: blobstoragelgtm\nEnv: Production\nSubscription: Observability Sponsorship",
       "type": "stat",
-      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 8 },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 16
+      },
       "id": 1,
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
           "thresholds": {
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 536870912 },
-              { "color": "orange", "value": 1073741824 },
-              { "color": "red", "value": 5368709120 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10737418240
+              },
+              {
+                "color": "red",
+                "value": 15032385536
+              }
             ]
           }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "background",
         "graphMode": "area"
       },
@@ -73,34 +110,54 @@
             "metricNamespace": "Microsoft.Storage/storageAccounts",
             "metricName": "UsedCapacity",
             "aggregation": "Average",
-            "timeGrain": "auto"
+            "timeGrain": "PT1H"
           }
         }
       ]
     },
     {
-      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "azure-monitor-vse" },
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "azure-monitor-vse"
+      },
       "title": "Ecommerce App / ecommerce-app-01",
       "description": "Customer: Ecommerce App\nProject: ecommerce-app-01\nStorage: blobstoragelgtm01\nEnv: Production\nSubscription: VS Enterprise 2025",
       "type": "stat",
-      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 8 },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 8,
+        "y": 16
+      },
       "id": 2,
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
           "thresholds": {
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 536870912 },
-              { "color": "orange", "value": 1073741824 },
-              { "color": "red", "value": 5368709120 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10737418240
+              },
+              {
+                "color": "red",
+                "value": 15032385536
+              }
             ]
           }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "background",
         "graphMode": "area"
       },
@@ -120,34 +177,54 @@
             "metricNamespace": "Microsoft.Storage/storageAccounts",
             "metricName": "UsedCapacity",
             "aggregation": "Average",
-            "timeGrain": "auto"
+            "timeGrain": "PT1H"
           }
         }
       ]
     },
     {
-      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "azure-monitor-vse" },
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "azure-monitor-vse"
+      },
       "title": "Ecommerce App / ecommerce-app-02",
       "description": "Customer: Ecommerce App\nProject: ecommerce-app-02\nStorage: blobstoragelgtmfp\nEnv: Demo\nSubscription: VS Enterprise 2025",
       "type": "stat",
-      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 8 },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 16
+      },
       "id": 3,
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
           "thresholds": {
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 536870912 },
-              { "color": "orange", "value": 1073741824 },
-              { "color": "red", "value": 5368709120 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10737418240
+              },
+              {
+                "color": "red",
+                "value": 15032385536
+              }
             ]
           }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "background",
         "graphMode": "area"
       },
@@ -167,115 +244,6 @@
             "metricNamespace": "Microsoft.Storage/storageAccounts",
             "metricName": "UsedCapacity",
             "aggregation": "Average",
-            "timeGrain": "auto"
-          }
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
-      "id": 300,
-      "title": "Comparison: This Week vs Last Week",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "azure-monitor-obs" },
-      "title": "CMP — Last Week",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 14 },
-      "id": 301,
-      "timeShift": "7d",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "thresholds": { "steps": [{ "color": "light-purple", "value": null }] }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "colorMode": "background",
-        "graphMode": "none",
-        "textMode": "value"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "queryType": "Azure Monitor",
-          "azureMonitor": {
-            "resources": [{ "subscription": "45b45b30-22e0-498e-8897-23e603fffb53", "resourceGroup": "rg-lgtm", "metricNamespace": "Microsoft.Storage/storageAccounts", "resourceName": "blobstoragelgtm" }],
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
-            "metricName": "UsedCapacity",
-            "aggregation": "Average",
-            "timeGrain": "PT1H"
-          }
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "azure-monitor-vse" },
-      "title": "Ecommerce Prod — Last Week",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 14 },
-      "id": 302,
-      "timeShift": "7d",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "thresholds": { "steps": [{ "color": "light-purple", "value": null }] }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "colorMode": "background",
-        "graphMode": "none",
-        "textMode": "value"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "queryType": "Azure Monitor",
-          "azureMonitor": {
-            "resources": [{ "subscription": "163c1284-7060-4c7f-822f-efc086bbf95e", "resourceGroup": "rg-lgtm", "metricNamespace": "Microsoft.Storage/storageAccounts", "resourceName": "blobstoragelgtm01" }],
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
-            "metricName": "UsedCapacity",
-            "aggregation": "Average",
-            "timeGrain": "PT1H"
-          }
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "azure-monitor-vse" },
-      "title": "Ecommerce Demo — Last Week",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 14 },
-      "id": 303,
-      "timeShift": "30d",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "thresholds": { "steps": [{ "color": "light-purple", "value": null }] }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "colorMode": "background",
-        "graphMode": "none",
-        "textMode": "value"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "queryType": "Azure Monitor",
-          "azureMonitor": {
-            "resources": [{ "subscription": "163c1284-7060-4c7f-822f-efc086bbf95e", "resourceGroup": "rg-lgtm-fp-cmp", "metricNamespace": "Microsoft.Storage/storageAccounts", "resourceName": "blobstoragelgtmfp" }],
-            "metricNamespace": "Microsoft.Storage/storageAccounts",
-            "metricName": "UsedCapacity",
-            "aggregation": "Average",
             "timeGrain": "PT1H"
           }
         }
@@ -283,68 +251,76 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
-      "id": 101,
-      "title": "Storage Usage Trend (All Accounts)",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 400,
+      "title": "Billing Customer (Rp 20.000/GB/bulan)",
       "type": "row"
     },
     {
-      "title": "Storage Usage Over Time — All Projects",
-      "description": "Trend penggunaan storage semua project dalam satu grafik",
-      "type": "timeseries",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 19 },
-      "id": 4,
+      "title": "CMP / app-cmp",
+      "description": "Billing ke customer\nStorage: blobstoragelgtm\nRumus: Capacity_GB x Rp 20.000\nHarga jual: Rp 20.000/GB/bulan",
+      "type": "stat",
+      "datasource": {
+        "uid": "-- Mixed --"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 22
+      },
+      "id": 401,
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "fillOpacity": 15,
-            "pointSize": 5,
-            "showPoints": "auto",
-            "spanNulls": true,
-            "gradientMode": "scheme"
-          }
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100000
+              },
+              {
+                "color": "orange",
+                "value": 500000
+              },
+              {
+                "color": "red",
+                "value": 1000000
+              }
+            ]
+          },
+          "custom": {}
         },
-        "overrides": [
-          {
-            "matcher": { "id": "byFrameRefID", "options": "A" },
-            "properties": [
-              { "id": "displayName", "value": "CMP / app-cmp (blobstoragelgtm)" },
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "super-light-purple" } }
-            ]
-          },
-          {
-            "matcher": { "id": "byFrameRefID", "options": "B" },
-            "properties": [
-              { "id": "displayName", "value": "Ecommerce App / Prod (blobstoragelgtm01)" },
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "super-light-blue" } }
-            ]
-          },
-          {
-            "matcher": { "id": "byFrameRefID", "options": "C" },
-            "properties": [
-              { "id": "displayName", "value": "Ecommerce App / Demo (blobstoragelgtmfp)" },
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "super-light-green" } }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": ["lastNotNull", "min", "max", "mean", "diff"]
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
         },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
       },
-      "datasource": { "uid": "-- Mixed --" },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "azure-monitor-obs" },
+          "hide": true,
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-obs"
+          },
           "queryType": "Azure Monitor",
           "azureMonitor": {
             "resources": [
@@ -363,7 +339,313 @@
         },
         {
           "refId": "B",
-          "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "azure-monitor-vse" },
+          "hide": true,
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "reduce",
+          "expression": "A",
+          "reducer": "last",
+          "settings": {
+            "mode": "dropNN"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "math",
+          "expression": "$B / 1073741824 * 20000"
+        }
+      ]
+    },
+    {
+      "title": "Ecommerce Prod",
+      "description": "Billing ke customer\nStorage: blobstoragelgtm01\nRumus: Capacity_GB x Rp 20.000\nHarga jual: Rp 20.000/GB/bulan",
+      "type": "stat",
+      "datasource": {
+        "uid": "-- Mixed --"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 22
+      },
+      "id": 402,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100000
+              },
+              {
+                "color": "orange",
+                "value": 500000
+              },
+              {
+                "color": "red",
+                "value": 1000000
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "hide": true,
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-vse"
+          },
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "resources": [
+              {
+                "subscription": "163c1284-7060-4c7f-822f-efc086bbf95e",
+                "resourceGroup": "rg-lgtm",
+                "metricNamespace": "Microsoft.Storage/storageAccounts",
+                "resourceName": "blobstoragelgtm01"
+              }
+            ],
+            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricName": "UsedCapacity",
+            "aggregation": "Average",
+            "timeGrain": "PT1H"
+          }
+        },
+        {
+          "refId": "B",
+          "hide": true,
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "reduce",
+          "expression": "A",
+          "reducer": "last",
+          "settings": {
+            "mode": "dropNN"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "math",
+          "expression": "$B / 1073741824 * 20000"
+        }
+      ]
+    },
+    {
+      "title": "Ecommerce Demo",
+      "description": "Billing ke customer\nStorage: blobstoragelgtmfp\nRumus: Capacity_GB x Rp 20.000\nHarga jual: Rp 20.000/GB/bulan",
+      "type": "stat",
+      "datasource": {
+        "uid": "-- Mixed --"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 22
+      },
+      "id": 403,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100000
+              },
+              {
+                "color": "orange",
+                "value": 500000
+              },
+              {
+                "color": "red",
+                "value": 1000000
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "hide": true,
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-vse"
+          },
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "resources": [
+              {
+                "subscription": "163c1284-7060-4c7f-822f-efc086bbf95e",
+                "resourceGroup": "rg-lgtm-fp-cmp",
+                "metricNamespace": "Microsoft.Storage/storageAccounts",
+                "resourceName": "blobstoragelgtmfp"
+              }
+            ],
+            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricName": "UsedCapacity",
+            "aggregation": "Average",
+            "timeGrain": "PT1H"
+          }
+        },
+        {
+          "refId": "B",
+          "hide": true,
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "reduce",
+          "expression": "A",
+          "reducer": "last",
+          "settings": {
+            "mode": "dropNN"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "math",
+          "expression": "$B / 1073741824 * 20000"
+        }
+      ]
+    },
+    {
+      "title": "Total Semua Storage",
+      "description": "Total billing ke semua customer\nRumus: Sum(Capacity_GB) x Rp 20.000/GB",
+      "type": "stat",
+      "datasource": {
+        "uid": "-- Mixed --"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 22
+      },
+      "id": 404,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 500000
+              },
+              {
+                "color": "orange",
+                "value": 1000000
+              },
+              {
+                "color": "red",
+                "value": 5000000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "hide": true,
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-obs"
+          },
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "resources": [
+              {
+                "subscription": "45b45b30-22e0-498e-8897-23e603fffb53",
+                "resourceGroup": "rg-lgtm",
+                "metricNamespace": "Microsoft.Storage/storageAccounts",
+                "resourceName": "blobstoragelgtm"
+              }
+            ],
+            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricName": "UsedCapacity",
+            "aggregation": "Average",
+            "timeGrain": "PT1H"
+          }
+        },
+        {
+          "refId": "B",
+          "hide": true,
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-vse"
+          },
           "queryType": "Azure Monitor",
           "azureMonitor": {
             "resources": [
@@ -382,7 +664,434 @@
         },
         {
           "refId": "C",
-          "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "azure-monitor-vse" },
+          "hide": true,
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-vse"
+          },
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "resources": [
+              {
+                "subscription": "163c1284-7060-4c7f-822f-efc086bbf95e",
+                "resourceGroup": "rg-lgtm-fp-cmp",
+                "metricNamespace": "Microsoft.Storage/storageAccounts",
+                "resourceName": "blobstoragelgtmfp"
+              }
+            ],
+            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricName": "UsedCapacity",
+            "aggregation": "Average",
+            "timeGrain": "PT1H"
+          }
+        },
+        {
+          "refId": "D",
+          "hide": true,
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "reduce",
+          "expression": "A",
+          "reducer": "last",
+          "settings": {
+            "mode": "dropNN"
+          }
+        },
+        {
+          "refId": "E",
+          "hide": true,
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "reduce",
+          "expression": "B",
+          "reducer": "last",
+          "settings": {
+            "mode": "dropNN"
+          }
+        },
+        {
+          "refId": "F",
+          "hide": true,
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "reduce",
+          "expression": "C",
+          "reducer": "last",
+          "settings": {
+            "mode": "dropNN"
+          }
+        },
+        {
+          "refId": "Total",
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "type": "math",
+          "expression": "($D + $E + $F) / 1073741824 * 20000"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 500,
+      "title": "Blob Transactions (30 Hari)",
+      "type": "row"
+    },
+    {
+      "title": "Transactions per Storage Account",
+      "description": "Total transaksi harian per storage account (semua operasi: read, write, list, delete)\nMetric: Microsoft.Storage/storageAccounts/blobServices - Transactions",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "-- Mixed --"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 501,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "pointSize": 5,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            },
+            "gradientMode": "scheme"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "CMP (blobstoragelgtm)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "super-light-purple"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ecommerce Prod (blobstoragelgtm01)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "super-light-blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ecommerce Demo (blobstoragelgtmfp)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "super-light-green"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "sum",
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-obs"
+          },
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "resources": [
+              {
+                "subscription": "45b45b30-22e0-498e-8897-23e603fffb53",
+                "resourceGroup": "rg-lgtm",
+                "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+                "resourceName": "blobstoragelgtm/default"
+              }
+            ],
+            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricName": "Transactions",
+            "aggregation": "Total",
+            "timeGrain": "P1D"
+          }
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-vse"
+          },
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "resources": [
+              {
+                "subscription": "163c1284-7060-4c7f-822f-efc086bbf95e",
+                "resourceGroup": "rg-lgtm",
+                "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+                "resourceName": "blobstoragelgtm01/default"
+              }
+            ],
+            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricName": "Transactions",
+            "aggregation": "Total",
+            "timeGrain": "P1D"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-vse"
+          },
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "resources": [
+              {
+                "subscription": "163c1284-7060-4c7f-822f-efc086bbf95e",
+                "resourceGroup": "rg-lgtm-fp-cmp",
+                "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+                "resourceName": "blobstoragelgtmfp/default"
+              }
+            ],
+            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricName": "Transactions",
+            "aggregation": "Total",
+            "timeGrain": "P1D"
+          }
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 101,
+      "title": "Storage Usage Trend (All Accounts)",
+      "type": "row"
+    },
+    {
+      "title": "Storage Usage Over Time — All Projects",
+      "description": "Trend penggunaan storage semua project dalam satu grafik",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "id": 4,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "gradientMode": "scheme"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "CMP / app-cmp (blobstoragelgtm)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "super-light-purple"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ecommerce App / Prod (blobstoragelgtm01)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "super-light-blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ecommerce App / Demo (blobstoragelgtmfp)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "super-light-green"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max",
+            "mean",
+            "diff"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "uid": "-- Mixed --"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-obs"
+          },
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "resources": [
+              {
+                "subscription": "45b45b30-22e0-498e-8897-23e603fffb53",
+                "resourceGroup": "rg-lgtm",
+                "metricNamespace": "Microsoft.Storage/storageAccounts",
+                "resourceName": "blobstoragelgtm"
+              }
+            ],
+            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricName": "UsedCapacity",
+            "aggregation": "Average",
+            "timeGrain": "PT1H"
+          }
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-vse"
+          },
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "resources": [
+              {
+                "subscription": "163c1284-7060-4c7f-822f-efc086bbf95e",
+                "resourceGroup": "rg-lgtm",
+                "metricNamespace": "Microsoft.Storage/storageAccounts",
+                "resourceName": "blobstoragelgtm01"
+              }
+            ],
+            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricName": "UsedCapacity",
+            "aggregation": "Average",
+            "timeGrain": "PT1H"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "azure-monitor-vse"
+          },
           "queryType": "Azure Monitor",
           "azureMonitor": {
             "resources": [
@@ -403,28 +1112,56 @@
     },
     {
       "collapsed": true,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 50
+      },
       "id": 102,
       "title": "CMP / app-cmp — Detail (blobstoragelgtm)",
       "type": "row",
       "panels": [
         {
-          "datasource": { "uid": "azure-monitor-obs" },
+          "datasource": {
+            "uid": "azure-monitor-obs"
+          },
           "title": "Blob Capacity per Container",
           "description": "Customer: CMP | Project: app-cmp | Storage: blobstoragelgtm",
           "type": "timeseries",
-          "gridPos": { "h": 9, "w": 12, "x": 0, "y": 30 },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 51
+          },
           "id": 9,
           "fieldConfig": {
             "defaults": {
               "unit": "bytes",
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "gradientMode": "scheme" }
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "scheme"
+              }
             },
             "overrides": []
           },
           "options": {
-            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean"] },
-            "tooltip": { "mode": "multi", "sort": "desc" }
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
           },
           "targets": [
             {
@@ -447,7 +1184,9 @@
                   {
                     "dimension": "BlobType",
                     "operator": "eq",
-                    "filters": ["BlockBlob"]
+                    "filters": [
+                      "BlockBlob"
+                    ]
                   }
                 ]
               }
@@ -455,22 +1194,45 @@
           ]
         },
         {
-          "datasource": { "uid": "azure-monitor-obs" },
+          "datasource": {
+            "uid": "azure-monitor-obs"
+          },
           "title": "Blob Count per Container",
           "description": "Customer: CMP | Project: app-cmp | Storage: blobstoragelgtm",
           "type": "timeseries",
-          "gridPos": { "h": 9, "w": 12, "x": 12, "y": 30 },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 51
+          },
           "id": 10,
           "fieldConfig": {
             "defaults": {
               "unit": "short",
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "gradientMode": "scheme" }
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "scheme"
+              }
             },
             "overrides": []
           },
           "options": {
-            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean"] },
-            "tooltip": { "mode": "multi", "sort": "desc" }
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
           },
           "targets": [
             {
@@ -493,7 +1255,9 @@
                   {
                     "dimension": "BlobType",
                     "operator": "eq",
-                    "filters": ["BlockBlob"]
+                    "filters": [
+                      "BlockBlob"
+                    ]
                   }
                 ]
               }
@@ -504,28 +1268,56 @@
     },
     {
       "collapsed": true,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
       "id": 103,
       "title": "Ecommerce App / ecommerce-app-01 — Prod (blobstoragelgtm01)",
       "type": "row",
       "panels": [
         {
-          "datasource": { "uid": "azure-monitor-vse" },
+          "datasource": {
+            "uid": "azure-monitor-vse"
+          },
           "title": "Blob Capacity per Container",
           "description": "Customer: Ecommerce App | Project: ecommerce-app-01 | Storage: blobstoragelgtm01 | Env: Production",
           "type": "timeseries",
-          "gridPos": { "h": 9, "w": 12, "x": 0, "y": 31 },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 52
+          },
           "id": 5,
           "fieldConfig": {
             "defaults": {
               "unit": "bytes",
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "gradientMode": "scheme" }
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "scheme"
+              }
             },
             "overrides": []
           },
           "options": {
-            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean"] },
-            "tooltip": { "mode": "multi", "sort": "desc" }
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
           },
           "targets": [
             {
@@ -548,7 +1340,9 @@
                   {
                     "dimension": "BlobType",
                     "operator": "eq",
-                    "filters": ["BlockBlob"]
+                    "filters": [
+                      "BlockBlob"
+                    ]
                   }
                 ]
               }
@@ -556,22 +1350,45 @@
           ]
         },
         {
-          "datasource": { "uid": "azure-monitor-vse" },
+          "datasource": {
+            "uid": "azure-monitor-vse"
+          },
           "title": "Blob Count per Container",
           "description": "Customer: Ecommerce App | Project: ecommerce-app-01 | Storage: blobstoragelgtm01 | Env: Production",
           "type": "timeseries",
-          "gridPos": { "h": 9, "w": 12, "x": 12, "y": 31 },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 52
+          },
           "id": 6,
           "fieldConfig": {
             "defaults": {
               "unit": "short",
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "gradientMode": "scheme" }
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "scheme"
+              }
             },
             "overrides": []
           },
           "options": {
-            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean"] },
-            "tooltip": { "mode": "multi", "sort": "desc" }
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
           },
           "targets": [
             {
@@ -594,7 +1411,9 @@
                   {
                     "dimension": "BlobType",
                     "operator": "eq",
-                    "filters": ["BlockBlob"]
+                    "filters": [
+                      "BlockBlob"
+                    ]
                   }
                 ]
               }
@@ -605,28 +1424,56 @@
     },
     {
       "collapsed": true,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 52
+      },
       "id": 104,
       "title": "Ecommerce App / ecommerce-app-02 — Demo (blobstoragelgtmfp)",
       "type": "row",
       "panels": [
         {
-          "datasource": { "uid": "azure-monitor-vse" },
+          "datasource": {
+            "uid": "azure-monitor-vse"
+          },
           "title": "Blob Capacity per Container",
           "description": "Customer: Ecommerce App | Project: ecommerce-app-02 | Storage: blobstoragelgtmfp | Env: Demo",
           "type": "timeseries",
-          "gridPos": { "h": 9, "w": 12, "x": 0, "y": 32 },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 53
+          },
           "id": 7,
           "fieldConfig": {
             "defaults": {
               "unit": "bytes",
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "gradientMode": "scheme" }
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "scheme"
+              }
             },
             "overrides": []
           },
           "options": {
-            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean"] },
-            "tooltip": { "mode": "multi", "sort": "desc" }
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
           },
           "targets": [
             {
@@ -649,7 +1496,9 @@
                   {
                     "dimension": "BlobType",
                     "operator": "eq",
-                    "filters": ["BlockBlob"]
+                    "filters": [
+                      "BlockBlob"
+                    ]
                   }
                 ]
               }
@@ -657,22 +1506,45 @@
           ]
         },
         {
-          "datasource": { "uid": "azure-monitor-vse" },
+          "datasource": {
+            "uid": "azure-monitor-vse"
+          },
           "title": "Blob Count per Container",
           "description": "Customer: Ecommerce App | Project: ecommerce-app-02 | Storage: blobstoragelgtmfp | Env: Demo",
           "type": "timeseries",
-          "gridPos": { "h": 9, "w": 12, "x": 12, "y": 32 },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 53
+          },
           "id": 8,
           "fieldConfig": {
             "defaults": {
               "unit": "short",
-              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "gradientMode": "scheme" }
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "scheme"
+              }
             },
             "overrides": []
           },
           "options": {
-            "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean"] },
-            "tooltip": { "mode": "multi", "sort": "desc" }
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
           },
           "targets": [
             {
@@ -695,7 +1567,9 @@
                   {
                     "dimension": "BlobType",
                     "operator": "eq",
-                    "filters": ["BlockBlob"]
+                    "filters": [
+                      "BlockBlob"
+                    ]
                   }
                 ]
               }
@@ -706,11 +1580,30 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["azure", "storage", "lgtm", "blob", "cost-monitoring"],
-  "templating": { "list": [] },
-  "time": { "from": "now-30d", "to": "now" },
+  "tags": [
+    "azure",
+    "storage",
+    "lgtm",
+    "blob",
+    "cost-monitoring"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
   "timepicker": {
-    "refresh_intervals": ["5m", "15m", "30m", "1h", "6h", "12h", "1d"]
+    "refresh_intervals": [
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "6h",
+      "12h",
+      "1d"
+    ]
   },
   "timezone": "browser",
   "title": "Azure Blob Storage - LGTM Usage",
