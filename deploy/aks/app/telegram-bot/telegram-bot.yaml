@@ -40,9 +40,9 @@ spec:
             - name: LOKI_URL
               value: "http://loki-gateway.monitoring.svc.cluster.local"
             - name: MIMIR_URL
-              value: "http://mimir-nginx.monitoring.svc.cluster.local"
+              value: "http://mimir-gateway.monitoring.svc.cluster.local"
             - name: TEMPO_URL
-              value: "http://tempo-query-frontend.monitoring.svc.cluster.local:3100"
+              value: "http://tempo-query-frontend.monitoring.svc.cluster.local:3200"
             - name: BEDROCK_PROXY_URL
               value: "http://bedrock-proxy.ecommerce.svc.cluster.local:4000"
             - name: ALLOWED_CHAT_IDS
