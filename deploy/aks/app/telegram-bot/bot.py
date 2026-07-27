@@ -117,7 +117,8 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Query Mimir for up metric
             up_resp = await client.get(
                 f"{MIMIR_URL}/prometheus/api/v1/query",
-                params={"query": 'up{namespace="ecommerce"}'}
+                params={"query": 'up{namespace="ecommerce"}'},
+                headers={"X-Scope-OrgID": "pods"},
             )
             up_data = up_resp.json() if up_resp.status_code == 200 else {}
 
@@ -150,10 +151,10 @@ async def health(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     endpoints = {
         "api-gateway": "http://api-gateway.ecommerce.svc.cluster.local:8080/health",
-        "product-service": "http://product-service.ecommerce.svc.cluster.local:8081/health",
-        "order-service": "http://order-service.ecommerce.svc.cluster.local:8082/health",
-        "user-service": "http://user-service.ecommerce.svc.cluster.local:8083/health",
-        "payment-service": "http://payment-service.ecommerce.svc.cluster.local:8084/health",
+        "product-service": "http://product-service.ecommerce.svc.cluster.local:8080/health",
+        "order-service": "http://order-service.ecommerce.svc.cluster.local:8080/health",
+        "user-service": "http://user-service.ecommerce.svc.cluster.local:8080/health",
+        "payment-service": "http://payment-service.ecommerce.svc.cluster.local:8080/health",
         "bedrock-proxy": "http://bedrock-proxy.ecommerce.svc.cluster.local:4000/health",
     }
 
@@ -438,7 +439,7 @@ async def logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"⏳ Fetching error logs for {service}...")
 
-    query = f'{{namespace="ecommerce", app="{service}"}} |= "error" or |= "Error" or |= "ERROR"'
+    query = f'{{namespace="ecommerce", pod=~"{service}.*"}} |~ "(?i)error"'
     log_entries = await _query_loki(query, limit=10)
 
     if not log_entries:
@@ -463,7 +464,7 @@ async def logs_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"ℹ️ Usage: /logs_error &lt;service&gt;\nServices: {', '.join(SERVICES)}", parse_mode=ParseMode.HTML)
         return
 
-    query = f'{{namespace="ecommerce", app="{service}"}} | logfmt | level=~"error|fatal|panic"'
+    query = f'{{namespace="ecommerce", pod=~"{service}.*"}} | logfmt | level=~"error|fatal|panic"'
     log_entries = await _query_loki(query, limit=15)
 
     if not log_entries:
@@ -486,7 +487,7 @@ async def logs_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"ℹ️ Usage: /logs_all &lt;service&gt;\nServices: {', '.join(SERVICES)}", parse_mode=ParseMode.HTML)
         return
 
-    query = f'{{namespace="ecommerce", app="{service}"}}'
+    query = f'{{namespace="ecommerce", pod=~"{service}.*"}}'
     log_entries = await _query_loki(query, limit=15)
 
     if not log_entries:
@@ -519,7 +520,7 @@ async def traces(update: Update, context: ContextTypes.DEFAULT_TYPE):
             resp = await client.get(
                 f"{TEMPO_URL}/api/search",
                 params={
-                    "q": f'resource.service.name="{service}" && duration > 1s',
+                    "q": f'{{ resource.service.name = "{service}" && duration > 1s }}',
                     "limit": 5,
                     "start": int((datetime.now(timezone.utc) - timedelta(hours=1)).timestamp()),
                     "end": int(datetime.now(timezone.utc).timestamp()),
@@ -670,7 +671,7 @@ async def diagnose(update: Update, context: ContextTypes.DEFAULT_TYPE):
         mem_data = await _query_mimir(f'sum(container_memory_working_set_bytes{{namespace="ecommerce", pod=~"{service}.*"}}) / 1024 / 1024')
         
         # Get recent error logs
-        error_logs = await _query_loki(f'{{namespace="ecommerce", app="{service}"}} |= "error"', limit=5)
+        error_logs = await _query_loki(f'{{namespace="ecommerce", pod=~"{service}.*"}} |~ "(?i)error"', limit=5)
 
         cpu_val = "N/A"
         mem_val = "N/A"
