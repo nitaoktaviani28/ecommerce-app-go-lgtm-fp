@@ -114,10 +114,10 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             headers = {"Authorization": f"Bearer {GRAFANA_API_KEY}"} if GRAFANA_API_KEY else {}
             resp = await client.get(f"{GRAFANA_URL}/api/v1/provisioning/alert-rules", headers=headers)
             
-            # Query Mimir for up metric
+            # Query Mimir for up metric (OTel services use job label)
             up_resp = await client.get(
                 f"{MIMIR_URL}/prometheus/api/v1/query",
-                params={"query": 'up{namespace="ecommerce"}'},
+                params={"query": 'up{job=~"api-gateway|product-service|order-service|user-service|payment-service"}'},
                 headers={"X-Scope-OrgID": "pods"},
             )
             up_data = up_resp.json() if up_resp.status_code == 200 else {}
@@ -330,7 +330,7 @@ async def latency(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     data = await _query_mimir(
-        'histogram_quantile(0.95, sum by (le, job) (rate(http_server_duration_milliseconds_bucket{namespace="ecommerce"}[5m])))'
+        'histogram_quantile(0.95, sum by (le, job) (rate(http_server_duration_milliseconds_bucket[5m])))'
     )
     results = data.get("data", {}).get("result", [])
 
@@ -355,7 +355,7 @@ async def traffic(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     data = await _query_mimir(
-        'sum by (job) (rate(http_server_duration_milliseconds_count{namespace="ecommerce"}[5m]))'
+        'sum by (job) (rate(http_server_duration_milliseconds_count[5m]))'
     )
     results = data.get("data", {}).get("result", [])
 
@@ -379,7 +379,7 @@ async def errors(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     data = await _query_mimir(
-        'sum by (job, http_status_code) (rate(http_server_duration_milliseconds_count{namespace="ecommerce", http_status_code=~"[4-5].."}[5m]))'
+        'sum by (job, http_status_code) (rate(http_server_duration_milliseconds_count{http_status_code=~"[4-5].."}[5m]))'
     )
     results = data.get("data", {}).get("result", [])
 
