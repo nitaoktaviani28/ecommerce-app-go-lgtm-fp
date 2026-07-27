@@ -53,8 +53,7 @@ Halo! Aku bot untuk monitoring e-commerce app (LGTM Stack).
 <b>📋 Available Commands:</b>
 
 <b>🔍 Status & Health</b>
-/status - Status semua services
-/health - Health check endpoints
+/health - Health check semua services
 /alerts - Alert yang sedang firing
 /alert_history - Riwayat alert 24 jam terakhir
 
@@ -100,47 +99,6 @@ Ketik command atau tanya langsung! 💬"""
 
 
 # ==================== STATUS & HEALTH ====================
-
-async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Check overall system status."""
-    if not is_authorized(update):
-        return
-
-    await update.message.reply_text("⏳ Checking services status...")
-
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            # Query Grafana for firing alerts
-            headers = {"Authorization": f"Bearer {GRAFANA_API_KEY}"} if GRAFANA_API_KEY else {}
-            resp = await client.get(f"{GRAFANA_URL}/api/v1/provisioning/alert-rules", headers=headers)
-            
-            # Query Mimir for up metric (OTel services use job label)
-            up_resp = await client.get(
-                f"{MIMIR_URL}/prometheus/api/v1/query",
-                params={"query": 'up{job=~"api-gateway|product-service|order-service|user-service|payment-service"}'},
-                headers={"X-Scope-OrgID": "pods"},
-            )
-            up_data = up_resp.json() if up_resp.status_code == 200 else {}
-
-        results = up_data.get("data", {}).get("result", [])
-        
-        text = "📊 <b>System Status</b>\n\n"
-        
-        if results:
-            for r in results:
-                job = r["metric"].get("job", "unknown")
-                value = r["value"][1] if len(r.get("value", [])) > 1 else "?"
-                status_icon = "🟢" if value == "1" else "🔴"
-                text += f"{status_icon} <code>{job}</code>: {'UP' if value == '1' else 'DOWN'}\n"
-        else:
-            text += "⚠️ Tidak bisa query metrics. Cek koneksi Mimir.\n"
-
-        text += f"\n🕐 <i>{datetime.now(WIB).strftime('%d %b %Y %H:%M WIB')}</i>"
-        await update.message.reply_text(text, parse_mode=ParseMode.HTML)
-
-    except Exception as e:
-        await update.message.reply_text(f"❌ Error: {str(e)[:200]}")
-
 
 async def health(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Health check all service endpoints."""
@@ -1134,8 +1092,7 @@ async def post_init(application):
     """Set bot commands after startup."""
     commands = [
         BotCommand("start", "Tampilkan menu & bantuan"),
-        BotCommand("status", "Status semua services"),
-        BotCommand("health", "Health check endpoints"),
+        BotCommand("health", "Health check semua services"),
         BotCommand("alerts", "Alert yang sedang firing"),
         BotCommand("alert_history", "Riwayat alert 24 jam"),
         BotCommand("cpu", "CPU usage per service"),
@@ -1168,7 +1125,6 @@ def main():
     app.add_handler(CommandHandler("help", start))
 
     # Status & Health
-    app.add_handler(CommandHandler("status", status))
     app.add_handler(CommandHandler("health", health))
     app.add_handler(CommandHandler("alerts", alerts))
     app.add_handler(CommandHandler("alert_history", alert_history))
