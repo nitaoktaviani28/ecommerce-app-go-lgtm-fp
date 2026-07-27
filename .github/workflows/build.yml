@@ -8,6 +8,7 @@ on:
       - 'backend/**'
       - 'frontend/**'
       - 'deploy/docker/bedrock-proxy/**'
+      - 'deploy/aks/app/telegram-bot/**'
       - '.github/workflows/build.yml'
   pull_request:
     branches:
@@ -16,6 +17,7 @@ on:
       - 'backend/**'
       - 'frontend/**'
       - 'deploy/docker/bedrock-proxy/**'
+      - 'deploy/aks/app/telegram-bot/**'
 
 env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -64,6 +66,11 @@ jobs:
             path: deploy/docker/bedrock-proxy
             dockerfile: deploy/docker/bedrock-proxy/Dockerfile
             image: ecommerce-bedrock-proxy
+
+          - name: telegram-bot
+            path: deploy/aks/app/telegram-bot
+            dockerfile: deploy/aks/app/telegram-bot/Dockerfile
+            image: ecommerce-telegram-bot
       
       max-parallel: 2
 

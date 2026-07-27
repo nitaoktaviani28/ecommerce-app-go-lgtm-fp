@@ -1,0 +1,57 @@
+# Secret harus dibuat manual via kubectl (JANGAN commit secret ke git):
+# kubectl create secret generic telegram-bot-secrets \
+#   --namespace=ecommerce \
+#   --from-literal=TELEGRAM_BOT_TOKEN=<your-bot-token> \
+#   --from-literal=GRAFANA_API_KEY=<your-grafana-api-key>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegram-bot
+  namespace: ecommerce
+  labels:
+    app: telegram-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegram-bot
+  template:
+    metadata:
+      labels:
+        app: telegram-bot
+    spec:
+      containers:
+        - name: telegram-bot
+          image: docker.io/haechanlovelove/ecommerce-telegram-bot:latest
+          env:
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: telegram-bot-secrets
+                  key: TELEGRAM_BOT_TOKEN
+            - name: GRAFANA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: telegram-bot-secrets
+                  key: GRAFANA_API_KEY
+            - name: GRAFANA_URL
+              value: "http://grafana.monitoring.svc.cluster.local"
+            - name: LOKI_URL
+              value: "http://loki-gateway.monitoring.svc.cluster.local"
+            - name: MIMIR_URL
+              value: "http://mimir-nginx.monitoring.svc.cluster.local"
+            - name: TEMPO_URL
+              value: "http://tempo-query-frontend.monitoring.svc.cluster.local:3100"
+            - name: BEDROCK_PROXY_URL
+              value: "http://bedrock-proxy.ecommerce.svc.cluster.local:4000"
+            - name: ALLOWED_CHAT_IDS
+              value: ""  # Kosongkan untuk allow semua, atau isi dengan chat ID (comma-separated)
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      restartPolicy: Always
