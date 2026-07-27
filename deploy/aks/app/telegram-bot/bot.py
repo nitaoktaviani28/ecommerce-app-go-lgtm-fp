@@ -258,12 +258,13 @@ async def alert_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ==================== METRICS ====================
 
-async def _query_mimir(query: str) -> dict:
-    """Query Mimir/Prometheus."""
+async def _query_mimir(query: str, tenant: str = "pods") -> dict:
+    """Query Mimir/Prometheus with tenant header."""
     async with httpx.AsyncClient(timeout=10) as client:
         resp = await client.get(
             f"{MIMIR_URL}/prometheus/api/v1/query",
-            params={"query": query}
+            params={"query": query},
+            headers={"X-Scope-OrgID": tenant},
         )
         return resp.json() if resp.status_code == 200 else {}
 
@@ -1005,8 +1006,8 @@ async def nodes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_authorized(update):
         return
 
-    cpu_data = await _query_mimir('100 - (avg by (node) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)')
-    mem_data = await _query_mimir('100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))')
+    cpu_data = await _query_mimir('100 - (avg by (node) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)', tenant="nodes")
+    mem_data = await _query_mimir('100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))', tenant="nodes")
 
     text = "🖥️ <b>Node Resources</b>\n\n"
 
