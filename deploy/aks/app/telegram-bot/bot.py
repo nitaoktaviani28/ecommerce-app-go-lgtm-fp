@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import re
 import httpx
 from datetime import datetime, timezone, timedelta
 from telegram import Update, BotCommand
@@ -129,6 +130,76 @@ async def _get_grafana_alerts() -> tuple[list[dict], list[str]]:
     return normalized_alerts, errors
 
 
+def _parse_duration_to_seconds(raw: str) -> int | None:
+    """Parse duration such as 30s, 15m, 1h, or 1d into seconds."""
+    if not raw:
+        return None
+
+    match = re.fullmatch(r"(\d+)([smhdSMHD])", raw.strip())
+    if not match:
+        return None
+
+    value = int(match.group(1))
+    unit = match.group(2).lower()
+    multiplier = {"s": 1, "m": 60, "h": 3600, "d": 86400}[unit]
+    return value * multiplier
+
+
+def _format_lookback_label(seconds: int) -> str:
+    """Human label for lookback duration."""
+    if seconds % 86400 == 0:
+        return f"{seconds // 86400}d"
+    if seconds % 3600 == 0:
+        return f"{seconds // 3600}h"
+    if seconds % 60 == 0:
+        return f"{seconds // 60}m"
+    return f"{seconds}s"
+
+
+def _resolve_service_name(raw: str) -> str | None:
+    """Resolve service aliases into canonical service names."""
+    if not raw:
+        return None
+    value = raw.strip().lower()
+
+    if value in SERVICES:
+        return value
+
+    alias_map = {
+        "api": "api-gateway",
+        "gateway": "api-gateway",
+        "product": "product-service",
+        "order": "order-service",
+        "user": "user-service",
+        "payment": "payment-service",
+        "frontend": "frontend",
+    }
+    return alias_map.get(value)
+
+
+def _parse_service_and_lookback(args: list[str], default_seconds: int) -> tuple[str | None, int, str | None]:
+    """Parse command args in either order: <service> <duration> or <duration> <service>."""
+    service = None
+    lookback_seconds = default_seconds
+    invalid_duration = None
+
+    for token in args:
+        maybe_seconds = _parse_duration_to_seconds(token)
+        if maybe_seconds is not None:
+            lookback_seconds = maybe_seconds
+            continue
+
+        maybe_service = _resolve_service_name(token)
+        if maybe_service:
+            service = maybe_service
+            continue
+
+        if re.fullmatch(r"\d+[a-zA-Z]+", token):
+            invalid_duration = token
+
+    return service, lookback_seconds, invalid_duration
+
+
 def is_authorized(update: Update) -> bool:
     """Check if chat is authorized."""
     if not ALLOWED_CHAT_IDS or ALLOWED_CHAT_IDS == [""]:
@@ -158,10 +229,11 @@ Halo! Aku bot untuk monitoring e-commerce app (LGTM Stack).
 /memory - Memory usage per service
 /latency - HTTP latency P95/P99
 /traffic - Request rate per service
-/error - Detail error + contoh log error terbaru
+/error - Ringkasan service error saat ini
+/error &lt;service&gt; &lt;durasi&gt; - Detail log error historis (contoh: /error api-gateway 1h)
 
 <b>📝 Logs</b>
-/logs &lt;service&gt; - Recent logs per service (realtime)
+/logs &lt;service&gt; [durasi] - Log service berdasarkan waktu (contoh: /logs api-gateway 24h)
 /logs_error &lt;service&gt; - Error logs
 /logs_all &lt;service&gt; - All recent logs
 
@@ -170,7 +242,6 @@ Halo! Aku bot untuk monitoring e-commerce app (LGTM Stack).
 /trace &lt;trace_id&gt; - Detail trace by ID
 
 <b>🧠 AI Assistant</b>
-/incident - AI incident summary (current alerts)
 /diagnose &lt;service&gt; - AI diagnosis untuk service
 /ask &lt;question&gt; - Tanya AI tentang infra/app
 
@@ -503,32 +574,42 @@ async def _query_loki(query: str, limit: int = 20, lookback_seconds: int = 120) 
 
 
 async def logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Get near-real-time logs for a specific service."""
+    """Get logs for a specific service with optional lookback duration."""
     if not is_authorized(update):
         return
 
-    service = context.args[0] if context.args else ""
+    service, lookback_seconds, invalid_duration = _parse_service_and_lookback(context.args, default_seconds=90)
+
+    if invalid_duration:
+        await update.message.reply_text(
+            f"⚠️ Format durasi <code>{invalid_duration}</code> tidak valid. Gunakan contoh: 30m, 1h, 24h.",
+            parse_mode=ParseMode.HTML,
+        )
+        return
+
     if not service:
         await update.message.reply_text(
-            "ℹ️ Usage: /logs &lt;service&gt;\n\n"
+            "ℹ️ Usage: /logs &lt;service&gt; [durasi]\n"
+            "Contoh: /logs api-gateway 1h atau /logs 24h api-gateway\n\n"
             f"Services: {', '.join(SERVICES)}",
             parse_mode=ParseMode.HTML,
         )
         return
 
-    await update.message.reply_text(f"⏳ Fetching recent logs untuk {service}...")
+    lookback_label = _format_lookback_label(lookback_seconds)
+    await update.message.reply_text(f"⏳ Fetching logs untuk {service} ({lookback_label})...")
     query = f'{{namespace="ecommerce", pod=~"{service}.*"}}'
-    log_entries = await _query_loki(query, limit=12, lookback_seconds=90)
+    log_entries = await _query_loki(query, limit=15, lookback_seconds=lookback_seconds)
 
     if not log_entries:
         await update.message.reply_text(
-            f"✅ Tidak ada logs terbaru untuk <code>{service}</code> (90 detik terakhir).",
+            f"✅ Tidak ada logs untuk <code>{service}</code> dalam <code>{lookback_label}</code> terakhir.",
             parse_mode=ParseMode.HTML,
         )
         return
 
-    text = f"📝 <b>Recent Logs: {service}</b> (realtime ~90 detik)\n\n"
-    for i, entry in enumerate(log_entries[:12], 1):
+    text = f"📝 <b>Logs: {service}</b> (lookback {lookback_label})\n\n"
+    for i, entry in enumerate(log_entries[:15], 1):
         # Truncate long log lines
         truncated = entry[:150] + "..." if len(entry) > 150 else entry
         text += f"<code>{i}. {truncated}</code>\n\n"
@@ -589,10 +670,53 @@ async def logs_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def error_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show current HTTP errors and the latest related error logs."""
+    """Show current HTTP errors or service-specific error logs in a custom window."""
     if not is_authorized(update):
         return
 
+    # Mode 2: /error <service> <durasi> or /error <durasi> <service>
+    if context.args:
+        service, lookback_seconds, invalid_duration = _parse_service_and_lookback(context.args, default_seconds=3600)
+
+        if invalid_duration:
+            await update.message.reply_text(
+                f"⚠️ Format durasi <code>{invalid_duration}</code> tidak valid. Gunakan contoh: 30m, 1h, 24h.",
+                parse_mode=ParseMode.HTML,
+            )
+            return
+
+        if not service:
+            await update.message.reply_text(
+                "ℹ️ Usage: /error &lt;service&gt; &lt;durasi&gt;\n"
+                "Contoh: /error api-gateway 1h atau /error 24h api-gateway\n\n"
+                f"Services: {', '.join(SERVICES)}",
+                parse_mode=ParseMode.HTML,
+            )
+            return
+
+        lookback_label = _format_lookback_label(lookback_seconds)
+        query = (
+            f'{{namespace="ecommerce", pod=~"({service}|{service.replace("-service", "")}).*"}} '
+            '|~ "(?i)(status=(4[0-9]{2}|5[0-9]{2})|\\berror\\b|\\bexception\\b|\\bpanic\\b|\\btimeout\\b|\\bfailed\\b)"'
+        )
+        log_entries = await _query_loki(query, limit=20, lookback_seconds=lookback_seconds)
+
+        if not log_entries:
+            await update.message.reply_text(
+                f"✅ Tidak ada log error untuk <code>{service}</code> dalam <code>{lookback_label}</code> terakhir.",
+                parse_mode=ParseMode.HTML,
+            )
+            return
+
+        text = f"❌ <b>Error Logs: {service}</b> (lookback {lookback_label})\n\n"
+        for i, entry in enumerate(log_entries[:20], 1):
+            text += f"<code>{i}. {entry[:170]}</code>\n\n"
+
+        text += f"🕐 <i>{datetime.now(WIB).strftime('%d %b %Y %H:%M WIB')}</i>"
+        await update.message.reply_text(text[:4000], parse_mode=ParseMode.HTML)
+        return
+
+    # Mode 1: /error (summary of currently erroring services)
     data = await _query_mimir(
         'sum by (job, http_status_code) (rate(http_server_duration_milliseconds_count{http_status_code=~"[4-5].."}[5m]))'
     )
@@ -624,19 +748,34 @@ async def error_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text += f"   • [{code}] {value:.3f} req/s\n"
 
         service_guess = job.replace("-service", "")
+        pod_regex = f"({job}|{service_guess}).*"
         query = (
-            f'{{namespace="ecommerce", pod=~"{service_guess}.*"}} '
+            f'{{namespace="ecommerce", pod=~"{pod_regex}"}} '
             '|~ "(?i)(status=(4[0-9]{2}|5[0-9]{2})|\\berror\\b|\\bexception\\b|\\bpanic\\b|\\btimeout\\b|\\bfailed\\b)"'
         )
-        log_entries = await _query_loki(query, limit=2, lookback_seconds=180)
+        log_entries = await _query_loki(query, limit=3, lookback_seconds=900)
         if log_entries:
             text += "   Log terbaru:\n"
             for i, entry in enumerate(log_entries, 1):
                 text += f"   <code>{i}. {entry[:140]}</code>\n"
         else:
-            text += "   ℹ️ Log error tidak ditemukan (180 detik terakhir).\n"
+            # Fallback for anomaly: metric has errors but logs do not show non-200 lines.
+            fallback_query = (
+                f'{{namespace="ecommerce", pod=~"{pod_regex}"}} '
+                '|~ "(?i)(\\[REQUEST\\]|\\[RESPONSE\\]|path=)" '
+                '!~ "path=/health"'
+            )
+            fallback_logs = await _query_loki(fallback_query, limit=2, lookback_seconds=900)
+            text += "   ℹ️ Log error status 4xx/5xx tidak ditemukan (15 menit terakhir).\n"
+            if fallback_logs:
+                text += "   Traffic terbaru (non-health) untuk bantu cek anomali:\n"
+                for i, entry in enumerate(fallback_logs, 1):
+                    text += f"   <code>{i}. {entry[:140]}</code>\n"
+            else:
+                text += "   ℹ️ Tidak ada traffic non-health terbaru di log.\n"
         text += "\n"
 
+    text += "💡 Detail historis: <code>/error &lt;service&gt; &lt;durasi&gt;</code> (contoh: <code>/error api-gateway 24h</code>)\n"
     text += f"\n\n🕐 <i>{datetime.now(WIB).strftime('%d %b %Y %H:%M WIB')}</i>"
     await update.message.reply_text(text[:4000], parse_mode=ParseMode.HTML)
 
@@ -1146,31 +1285,61 @@ async def nodes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_authorized(update):
         return
 
-    cpu_data = await _query_mimir('100 - (avg by (node) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)', tenant="nodes")
-    mem_data = await _query_mimir('100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))', tenant="nodes")
+    cpu_data = await _query_mimir(
+        '100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)',
+        tenant="nodes",
+    )
+    mem_data = await _query_mimir(
+        'avg by (instance) (100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)))',
+        tenant="nodes",
+    )
+    name_data = await _query_mimir('max by (instance, nodename) (node_uname_info)', tenant="nodes")
 
     text = "🖥️ <b>Node Resources</b>\n\n"
 
     cpu_results = cpu_data.get("data", {}).get("result", [])
     mem_results = mem_data.get("data", {}).get("result", [])
+    name_results = name_data.get("data", {}).get("result", [])
 
-    if cpu_results:
-        text += "<b>CPU Usage:</b>\n"
-        for r in cpu_results:
-            node = r["metric"].get("node", "unknown")
-            val = float(r["value"][1])
-            icon = "🔴" if val > 85 else "🟡" if val > 60 else "🟢"
-            text += f"{icon} <code>{node[:25]}</code>: {val:.1f}%\n"
+    name_by_instance = {}
+    for r in name_results:
+        metric = r.get("metric", {})
+        instance = metric.get("instance", "")
+        nodename = metric.get("nodename") or metric.get("node") or instance
+        if instance:
+            name_by_instance[instance] = nodename
 
-    if mem_results:
-        text += "\n<b>Memory Usage:</b>\n"
-        for r in mem_results:
-            node = r["metric"].get("node", "unknown")
-            val = float(r["value"][1])
-            icon = "🔴" if val > 85 else "🟡" if val > 60 else "🟢"
-            text += f"{icon} <code>{node[:25]}</code>: {val:.1f}%\n"
+    cpu_by_instance = {}
+    for r in cpu_results:
+        instance = r.get("metric", {}).get("instance", "unknown")
+        cpu_by_instance[instance] = float(r["value"][1])
 
-    if not cpu_results and not mem_results:
+    mem_by_instance = {}
+    for r in mem_results:
+        instance = r.get("metric", {}).get("instance", "unknown")
+        mem_by_instance[instance] = float(r["value"][1])
+
+    instances = sorted(set(cpu_by_instance.keys()) | set(mem_by_instance.keys()))
+
+    if instances:
+        for instance in instances:
+            node_name = name_by_instance.get(instance, instance)
+            cpu_val = cpu_by_instance.get(instance)
+            mem_val = mem_by_instance.get(instance)
+
+            cpu_icon = "⚪"
+            mem_icon = "⚪"
+            if cpu_val is not None:
+                cpu_icon = "🔴" if cpu_val > 85 else "🟡" if cpu_val > 60 else "🟢"
+            if mem_val is not None:
+                mem_icon = "🔴" if mem_val > 85 else "🟡" if mem_val > 60 else "🟢"
+
+            cpu_text = f"{cpu_val:.1f}%" if cpu_val is not None else "N/A"
+            mem_text = f"{mem_val:.1f}%" if mem_val is not None else "N/A"
+            text += f"🧩 <code>{node_name[:40]}</code>\n"
+            text += f"   {cpu_icon} CPU: {cpu_text}\n"
+            text += f"   {mem_icon} RAM: {mem_text}\n\n"
+    else:
         text += "⚠️ No node metrics available."
 
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
@@ -1280,10 +1449,9 @@ async def post_init(application):
         BotCommand("memory", "Memory usage per service"),
         BotCommand("latency", "HTTP latency P95"),
         BotCommand("traffic", "Request rate per service"),
-        BotCommand("error", "Detail error + log terbaru"),
-        BotCommand("logs", "Recent logs: /logs <service>"),
+        BotCommand("error", "Error summary / detail: /error <service> <durasi>"),
+        BotCommand("logs", "Logs with window: /logs <service> [durasi]"),
         BotCommand("traces", "Slow traces: /traces <service>"),
-        BotCommand("incident", "AI incident summary"),
         BotCommand("diagnose", "AI diagnosis: /diagnose <service>"),
         BotCommand("ask", "Tanya AI: /ask <pertanyaan>"),
         BotCommand("playbook", "List semua playbook"),
@@ -1327,7 +1495,6 @@ def main():
     app.add_handler(CommandHandler("trace", trace_detail))
 
     # AI
-    app.add_handler(CommandHandler("incident", incident))
     app.add_handler(CommandHandler("diagnose", diagnose))
     app.add_handler(CommandHandler("ask", ask))
 
