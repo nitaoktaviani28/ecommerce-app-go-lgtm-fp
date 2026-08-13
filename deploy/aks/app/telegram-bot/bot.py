@@ -33,6 +33,77 @@ SERVICES = ["api-gateway", "product-service", "order-service", "user-service", "
 WIB = timezone(timedelta(hours=7))
 
 
+def _grafana_headers() -> dict:
+    """Build Grafana auth headers when API key is configured."""
+    return {"Authorization": f"Bearer {GRAFANA_API_KEY}"} if GRAFANA_API_KEY else {}
+
+
+def _is_firing_state(state: str) -> bool:
+    """Normalize alert state checks across Grafana/Prometheus payloads."""
+    return (state or "").strip().lower() in {"active", "firing", "alerting"}
+
+
+def _normalize_alert(raw: dict) -> dict:
+    """Normalize alert payloads from different Grafana endpoints."""
+    labels = raw.get("labels", {}) or {}
+    annotations = raw.get("annotations", {}) or {}
+    status = raw.get("status", {})
+
+    # Alertmanager v2 uses status.state, Prometheus-style uses top-level state.
+    state = raw.get("state") or (status.get("state") if isinstance(status, dict) else "") or "unknown"
+
+    return {
+        "alertname": labels.get("alertname", "N/A"),
+        "severity": labels.get("severity", "unknown"),
+        "summary": annotations.get("summary") or annotations.get("description") or "N/A",
+        "state": state,
+        "starts_at": raw.get("startsAt") or raw.get("activeAt") or "",
+    }
+
+
+async def _get_grafana_alerts() -> tuple[list[dict], list[str]]:
+    """Fetch alerts from multiple Grafana APIs to support different deployments."""
+    errors = []
+    normalized_alerts = []
+
+    endpoints = [
+        {
+            "path": "/api/alertmanager/grafana/api/v2/alerts",
+            "extract": lambda payload: payload if isinstance(payload, list) else [],
+        },
+        {
+            "path": "/api/prometheus/grafana/api/v1/alerts",
+            "extract": lambda payload: payload.get("data", {}).get("alerts", []) if isinstance(payload, dict) else [],
+        },
+    ]
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        for ep in endpoints:
+            try:
+                resp = await client.get(
+                    f"{GRAFANA_URL}{ep['path']}",
+                    headers=_grafana_headers(),
+                )
+            except Exception as exc:
+                errors.append(f"{ep['path']}: network error ({str(exc)[:80]})")
+                continue
+
+            if resp.status_code != 200:
+                errors.append(f"{ep['path']}: HTTP {resp.status_code}")
+                continue
+
+            try:
+                payload = resp.json()
+            except Exception:
+                errors.append(f"{ep['path']}: invalid JSON response")
+                continue
+
+            raw_alerts = ep["extract"](payload)
+            normalized_alerts.extend(_normalize_alert(a) for a in raw_alerts if isinstance(a, dict))
+
+    return normalized_alerts, errors
+
+
 def is_authorized(update: Update) -> bool:
     """Check if chat is authorized."""
     if not ALLOWED_CHAT_IDS or ALLOWED_CHAT_IDS == [""]:
@@ -139,16 +210,22 @@ async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            headers = {"Authorization": f"Bearer {GRAFANA_API_KEY}"} if GRAFANA_API_KEY else {}
-            resp = await client.get(f"{GRAFANA_URL}/api/alertmanager/grafana/api/v2/alerts", headers=headers)
-            alerts_data = resp.json() if resp.status_code == 200 else []
+        alerts_data, errors = await _get_grafana_alerts()
+
+        if not alerts_data and errors:
+            err_text = "\n".join(errors[:3])
+            await update.message.reply_text(
+                "❌ <b>Gagal ambil data alert dari Grafana.</b>\n"
+                f"Detail: <code>{err_text}</code>",
+                parse_mode=ParseMode.HTML,
+            )
+            return
 
         if not alerts_data:
             await update.message.reply_text("✅ <b>Tidak ada alert yang firing saat ini.</b>", parse_mode=ParseMode.HTML)
             return
 
-        firing = [a for a in alerts_data if a.get("status", {}).get("state") == "active"]
+        firing = [a for a in alerts_data if _is_firing_state(a.get("state", ""))]
 
         if not firing:
             await update.message.reply_text("✅ <b>Semua alert resolved.</b>", parse_mode=ParseMode.HTML)
@@ -156,14 +233,13 @@ async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         text = f"🚨 <b>{len(firing)} Alert(s) Firing</b>\n\n"
         for a in firing[:10]:  # Max 10
-            labels = a.get("labels", {})
-            annotations = a.get("annotations", {})
-            severity = labels.get("severity", "unknown")
+            severity = a.get("severity", "unknown")
             sev_icon = "🔴" if severity == "critical" else "🟡"
             text += (
-                f"{sev_icon} <b>{labels.get('alertname', 'N/A')}</b>\n"
+                f"{sev_icon} <b>{a.get('alertname', 'N/A')}</b>\n"
                 f"   Severity: {severity}\n"
-                f"   Summary: {annotations.get('summary', 'N/A')}\n\n"
+                f"   State: {a.get('state', 'unknown')}\n"
+                f"   Summary: {a.get('summary', 'N/A')}\n\n"
             )
 
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
@@ -178,14 +254,10 @@ async def alert_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            headers = {"Authorization": f"Bearer {GRAFANA_API_KEY}"} if GRAFANA_API_KEY else {}
-            resp = await client.get(
-                f"{GRAFANA_URL}/api/v1/provisioning/alert-rules",
-                headers=headers,
-            )
+        headers = _grafana_headers()
 
-            # Query annotation (alert state history) from Grafana
+        async with httpx.AsyncClient(timeout=10) as client:
+            # Query annotation (alert state history) from Grafana.
             now = datetime.now(timezone.utc)
             from_ts = int((now - timedelta(hours=24)).timestamp() * 1000)
             to_ts = int(now.timestamp() * 1000)
@@ -197,8 +269,37 @@ async def alert_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             annotations = ann_resp.json() if ann_resp.status_code == 200 else []
 
+            # Fallback for setups where annotation history is disabled or empty.
+            if not annotations:
+                prom_resp = await client.get(
+                    f"{GRAFANA_URL}/api/prometheus/grafana/api/v1/alerts",
+                    headers=headers,
+                )
+                prom_payload = prom_resp.json() if prom_resp.status_code == 200 else {}
+                current_alerts = prom_payload.get("data", {}).get("alerts", [])
+            else:
+                current_alerts = []
+
         if not annotations:
-            await update.message.reply_text("📜 Tidak ada alert history dalam 24 jam terakhir.")
+            if not current_alerts:
+                await update.message.reply_text("📜 Tidak ada alert history dalam 24 jam terakhir.")
+                return
+
+            normalized_current = [_normalize_alert(a) for a in current_alerts if isinstance(a, dict)]
+            firing_now = [a for a in normalized_current if _is_firing_state(a.get("state", ""))]
+
+            if not firing_now:
+                await update.message.reply_text(
+                    "📜 History annotation kosong, dan tidak ada alert aktif saat ini."
+                )
+                return
+
+            text = "📜 <b>Alert Snapshot (fallback saat history tidak tersedia)</b>\n\n"
+            for a in firing_now[:15]:
+                sev_icon = "🔴" if a.get("severity", "").lower() == "critical" else "🟡"
+                text += f"{sev_icon} <code>{a.get('alertname', 'N/A')}</code> → {a.get('state', 'unknown')}\n"
+
+            await update.message.reply_text(text, parse_mode=ParseMode.HTML)
             return
 
         text = "📜 <b>Alert History (24 jam)</b>\n\n"
