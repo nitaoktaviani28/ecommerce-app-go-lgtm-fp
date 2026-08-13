@@ -624,7 +624,10 @@ async def error_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text += f"   • [{code}] {value:.3f} req/s\n"
 
         service_guess = job.replace("-service", "")
-        query = f'{{namespace="ecommerce", pod=~"{service_guess}.*"}} |~ "(?i)error|exception|panic|timeout|failed|404|500"'
+        query = (
+            f'{{namespace="ecommerce", pod=~"{service_guess}.*"}} '
+            '|~ "(?i)(status=(4[0-9]{2}|5[0-9]{2})|\\berror\\b|\\bexception\\b|\\bpanic\\b|\\btimeout\\b|\\bfailed\\b)"'
+        )
         log_entries = await _query_loki(query, limit=2, lookback_seconds=180)
         if log_entries:
             text += "   Log terbaru:\n"
