@@ -1293,21 +1293,22 @@ async def nodes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'avg by (instance) (100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)))',
         tenant="nodes",
     )
-    name_data = await _query_mimir('max by (instance, nodename) (node_uname_info)', tenant="nodes")
+    node_info_data = await _query_mimir('max by (node, internal_ip) (kube_node_info)', tenant="nodes")
 
     text = "🖥️ <b>Node Resources</b>\n\n"
 
     cpu_results = cpu_data.get("data", {}).get("result", [])
     mem_results = mem_data.get("data", {}).get("result", [])
-    name_results = name_data.get("data", {}).get("result", [])
+    node_info_results = node_info_data.get("data", {}).get("result", [])
 
-    name_by_instance = {}
-    for r in name_results:
+    # Prefer Kubernetes node names from kube-state-metrics, keyed by node internal IP.
+    node_name_by_ip = {}
+    for r in node_info_results:
         metric = r.get("metric", {})
-        instance = metric.get("instance", "")
-        nodename = metric.get("nodename") or metric.get("node") or instance
-        if instance:
-            name_by_instance[instance] = nodename
+        node_name = metric.get("node", "")
+        internal_ip = metric.get("internal_ip", "")
+        if node_name and internal_ip:
+            node_name_by_ip[internal_ip] = node_name
 
     cpu_by_instance = {}
     for r in cpu_results:
@@ -1323,7 +1324,8 @@ async def nodes(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if instances:
         for instance in instances:
-            node_name = name_by_instance.get(instance, instance)
+            instance_ip = instance.split(":")[0]
+            node_name = node_name_by_ip.get(instance_ip, instance)
             cpu_val = cpu_by_instance.get(instance)
             mem_val = mem_by_instance.get(instance)
 
