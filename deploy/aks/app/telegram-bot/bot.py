@@ -245,16 +245,6 @@ Halo! Aku bot untuk monitoring e-commerce app (LGTM Stack).
 /diagnose &lt;service&gt; - AI diagnosis untuk service
 /ask &lt;question&gt; - Tanya AI tentang infra/app
 
-<b>📖 Playbook</b>
-/playbook - List semua playbook
-/playbook_cpu - Playbook: High CPU
-/playbook_memory - Playbook: High Memory
-/playbook_restart - Playbook: Pod Restart Loop
-/playbook_5xx - Playbook: High 5xx Errors
-/playbook_latency - Playbook: High Latency
-/playbook_disk - Playbook: Disk Full
-/playbook_notraffic - Playbook: No Traffic
-
 <b>⚙️ Infra</b>
 /nodes - Node status & resource usage
 /pods - Pod status di namespace ecommerce
@@ -1456,7 +1446,6 @@ async def post_init(application):
         BotCommand("traces", "Slow traces: /traces <service>"),
         BotCommand("diagnose", "AI diagnosis: /diagnose <service>"),
         BotCommand("ask", "Tanya AI: /ask <pertanyaan>"),
-        BotCommand("playbook", "List semua playbook"),
         BotCommand("nodes", "Node resource usage"),
         BotCommand("pods", "Pod status"),
         BotCommand("deployments", "Deployment status"),
@@ -1499,16 +1488,6 @@ def main():
     # AI
     app.add_handler(CommandHandler("diagnose", diagnose))
     app.add_handler(CommandHandler("ask", ask))
-
-    # Playbooks
-    app.add_handler(CommandHandler("playbook", playbook))
-    app.add_handler(CommandHandler("playbook_cpu", playbook_handler))
-    app.add_handler(CommandHandler("playbook_memory", playbook_handler))
-    app.add_handler(CommandHandler("playbook_restart", playbook_handler))
-    app.add_handler(CommandHandler("playbook_5xx", playbook_handler))
-    app.add_handler(CommandHandler("playbook_latency", playbook_handler))
-    app.add_handler(CommandHandler("playbook_disk", playbook_handler))
-    app.add_handler(CommandHandler("playbook_notraffic", playbook_handler))
 
     # Infra
     app.add_handler(CommandHandler("nodes", nodes))
