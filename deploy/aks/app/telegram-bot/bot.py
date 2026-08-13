@@ -159,11 +159,9 @@ Halo! Aku bot untuk monitoring e-commerce app (LGTM Stack).
 /latency - HTTP latency P95/P99
 /traffic - Request rate per service
 /error - Detail error + contoh log error terbaru
-/errors - HTTP error rate (4xx/5xx)
 
 <b>📝 Logs</b>
-/logs - Recent logs semua service
-/logs &lt;service&gt; - Recent logs per service
+/logs &lt;service&gt; - Recent logs per service (realtime)
 /logs_error &lt;service&gt; - Error logs
 /logs_all &lt;service&gt; - All recent logs
 
@@ -481,7 +479,7 @@ async def errors(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ==================== LOGS ====================
 
-async def _query_loki(query: str, limit: int = 20) -> list:
+async def _query_loki(query: str, limit: int = 20, lookback_seconds: int = 120) -> list:
     """Query Loki for near-real-time logs."""
     async with httpx.AsyncClient(timeout=10) as client:
         resp = await client.get(
@@ -490,7 +488,7 @@ async def _query_loki(query: str, limit: int = 20) -> list:
                 "query": query,
                 "limit": limit,
                 "direction": "backward",
-                "start": int((datetime.now(timezone.utc) - timedelta(minutes=5)).timestamp() * 1e9),
+                "start": int((datetime.now(timezone.utc) - timedelta(seconds=lookback_seconds)).timestamp() * 1e9),
                 "end": int(datetime.now(timezone.utc).timestamp() * 1e9),
             }
         )
@@ -505,33 +503,32 @@ async def _query_loki(query: str, limit: int = 20) -> list:
 
 
 async def logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Get recent general logs (all levels), optionally filtered by service."""
+    """Get near-real-time logs for a specific service."""
     if not is_authorized(update):
         return
 
     service = context.args[0] if context.args else ""
-    target = service if service else "semua service"
-    await update.message.reply_text(f"⏳ Fetching recent logs untuk {target}...")
-
-    if service:
-        query = f'{{namespace="ecommerce", pod=~"{service}.*"}}'
-    else:
-        query = '{namespace="ecommerce"}'
-
-    log_entries = await _query_loki(query, limit=10)
-
-    if not log_entries:
-        if service:
-            await update.message.reply_text(
-                f"✅ Tidak ada logs terbaru untuk <code>{service}</code> (5 menit terakhir).",
-                parse_mode=ParseMode.HTML,
-            )
-        else:
-            await update.message.reply_text("✅ Tidak ada logs terbaru (5 menit terakhir).", parse_mode=ParseMode.HTML)
+    if not service:
+        await update.message.reply_text(
+            "ℹ️ Usage: /logs &lt;service&gt;\n\n"
+            f"Services: {', '.join(SERVICES)}",
+            parse_mode=ParseMode.HTML,
+        )
         return
 
-    text = f"📝 <b>Recent Logs: {target}</b> (5 menit terakhir)\n\n"
-    for i, entry in enumerate(log_entries[:10], 1):
+    await update.message.reply_text(f"⏳ Fetching recent logs untuk {service}...")
+    query = f'{{namespace="ecommerce", pod=~"{service}.*"}}'
+    log_entries = await _query_loki(query, limit=12, lookback_seconds=90)
+
+    if not log_entries:
+        await update.message.reply_text(
+            f"✅ Tidak ada logs terbaru untuk <code>{service}</code> (90 detik terakhir).",
+            parse_mode=ParseMode.HTML,
+        )
+        return
+
+    text = f"📝 <b>Recent Logs: {service}</b> (realtime ~90 detik)\n\n"
+    for i, entry in enumerate(log_entries[:12], 1):
         # Truncate long log lines
         truncated = entry[:150] + "..." if len(entry) > 150 else entry
         text += f"<code>{i}. {truncated}</code>\n\n"
@@ -607,33 +604,35 @@ async def error_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     sorted_results = sorted(results, key=lambda x: float(x["value"][1]), reverse=True)
 
-    text = "❌ <b>Current HTTP Errors + Why</b>\n\n"
-    top = sorted_results[0]
-    top_job = top["metric"].get("job", "unknown")
-    top_code = top["metric"].get("http_status_code", "?")
-    top_rate = float(top["value"][1])
+    text = "❌ <b>Current HTTP Errors + Logs</b>\n\n"
+    text += "<b>Service yang error saat ini:</b>\n"
 
-    text += "<b>Top error saat ini:</b>\n"
-    text += f"🔴 <code>{top_job}</code> [{top_code}] {top_rate:.3f} req/s\n\n"
-    text += "<b>Ringkasan error rate:</b>\n"
-
-    for r in sorted_results[:8]:
+    # Aggregate by service/job for clearer operational signal.
+    by_job = {}
+    for r in sorted_results:
         job = r["metric"].get("job", "unknown")
         code = r["metric"].get("http_status_code", "?")
         value = float(r["value"][1])
-        text += f"• <code>{job}</code> [{code}] {value:.3f} req/s\n"
+        by_job.setdefault(job, {"total": 0.0, "codes": []})
+        by_job[job]["total"] += value
+        by_job[job]["codes"].append((code, value))
 
-    # Try to infer service name used in pod labels, then fetch latest error logs.
-    service_guess = top_job.replace("-service", "")
-    query = f'{{namespace="ecommerce", pod=~"{service_guess}.*"}} |~ "(?i)error|exception|panic|timeout|failed|404|500"'
-    log_entries = await _query_loki(query, limit=5)
+    top_jobs = sorted(by_job.items(), key=lambda item: item[1]["total"], reverse=True)[:3]
+    for job, info in top_jobs:
+        text += f"🔴 <code>{job}</code> total={info['total']:.3f} req/s\n"
+        for code, value in sorted(info["codes"], key=lambda item: item[1], reverse=True)[:3]:
+            text += f"   • [{code}] {value:.3f} req/s\n"
 
-    if log_entries:
-        text += "\n<b>Contoh log error terbaru:</b>\n"
-        for i, entry in enumerate(log_entries, 1):
-            text += f"<code>{i}. {entry[:160]}</code>\n"
-    else:
-        text += "\nℹ️ Belum ada baris log error yang match dalam 5 menit terakhir."
+        service_guess = job.replace("-service", "")
+        query = f'{{namespace="ecommerce", pod=~"{service_guess}.*"}} |~ "(?i)error|exception|panic|timeout|failed|404|500"'
+        log_entries = await _query_loki(query, limit=2, lookback_seconds=180)
+        if log_entries:
+            text += "   Log terbaru:\n"
+            for i, entry in enumerate(log_entries, 1):
+                text += f"   <code>{i}. {entry[:140]}</code>\n"
+        else:
+            text += "   ℹ️ Log error tidak ditemukan (180 detik terakhir).\n"
+        text += "\n"
 
     text += f"\n\n🕐 <i>{datetime.now(WIB).strftime('%d %b %Y %H:%M WIB')}</i>"
     await update.message.reply_text(text[:4000], parse_mode=ParseMode.HTML)
@@ -974,7 +973,7 @@ PLAYBOOKS = {
 
 <b>Diagnosis Steps:</b>
 1. Cek error rate per service:
-   <code>/errors</code> (bot command)
+    <code>/error</code> (bot command)
 
 2. Cek error logs:
    <code>/logs_error &lt;service&gt;</code>
@@ -1279,8 +1278,7 @@ async def post_init(application):
         BotCommand("latency", "HTTP latency P95"),
         BotCommand("traffic", "Request rate per service"),
         BotCommand("error", "Detail error + log terbaru"),
-        BotCommand("errors", "HTTP error rate 4xx/5xx"),
-        BotCommand("logs", "Recent logs (semua/per service)"),
+        BotCommand("logs", "Recent logs: /logs <service>"),
         BotCommand("traces", "Slow traces: /traces <service>"),
         BotCommand("incident", "AI incident summary"),
         BotCommand("diagnose", "AI diagnosis: /diagnose <service>"),
@@ -1315,7 +1313,6 @@ def main():
     app.add_handler(CommandHandler("latency", latency))
     app.add_handler(CommandHandler("traffic", traffic))
     app.add_handler(CommandHandler("error", error_detail))
-    app.add_handler(CommandHandler("errors", errors))
 
     # Logs
     app.add_handler(CommandHandler("logs", logs))
