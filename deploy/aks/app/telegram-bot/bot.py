@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 GRAFANA_URL = os.environ.get("GRAFANA_URL", "http://grafana.monitoring.svc.cluster.local")
 GRAFANA_API_KEY = os.environ.get("GRAFANA_API_KEY", "")
+GRAFANA_USERNAME = os.environ.get("GRAFANA_USERNAME", "")
+GRAFANA_PASSWORD = os.environ.get("GRAFANA_PASSWORD", "")
 LOKI_URL = os.environ.get("LOKI_URL", "http://loki-gateway.monitoring.svc.cluster.local")
 MIMIR_URL = os.environ.get("MIMIR_URL", "http://mimir-gateway.monitoring.svc.cluster.local")
 TEMPO_URL = os.environ.get("TEMPO_URL", "http://tempo-query-frontend.monitoring.svc.cluster.local:3200")
@@ -36,6 +38,32 @@ WIB = timezone(timedelta(hours=7))
 def _grafana_headers() -> dict:
     """Build Grafana auth headers when API key is configured."""
     return {"Authorization": f"Bearer {GRAFANA_API_KEY}"} if GRAFANA_API_KEY else {}
+
+
+def _grafana_basic_auth() -> tuple[str, str] | None:
+    """Return basic auth tuple when username/password is configured."""
+    if GRAFANA_USERNAME and GRAFANA_PASSWORD:
+        return (GRAFANA_USERNAME, GRAFANA_PASSWORD)
+    return None
+
+
+async def _grafana_get(client: httpx.AsyncClient, path: str, params: dict | None = None) -> httpx.Response:
+    """Try Grafana Bearer auth first, then fallback to Basic on 401."""
+    resp = await client.get(
+        f"{GRAFANA_URL}{path}",
+        params=params,
+        headers=_grafana_headers(),
+    )
+
+    basic_auth = _grafana_basic_auth()
+    if resp.status_code == 401 and basic_auth:
+        resp = await client.get(
+            f"{GRAFANA_URL}{path}",
+            params=params,
+            auth=basic_auth,
+        )
+
+    return resp
 
 
 def _is_firing_state(state: str) -> bool:
@@ -80,10 +108,7 @@ async def _get_grafana_alerts() -> tuple[list[dict], list[str]]:
     async with httpx.AsyncClient(timeout=10) as client:
         for ep in endpoints:
             try:
-                resp = await client.get(
-                    f"{GRAFANA_URL}{ep['path']}",
-                    headers=_grafana_headers(),
-                )
+                resp = await _grafana_get(client, ep["path"])
             except Exception as exc:
                 errors.append(f"{ep['path']}: network error ({str(exc)[:80]})")
                 continue
@@ -133,10 +158,12 @@ Halo! Aku bot untuk monitoring e-commerce app (LGTM Stack).
 /memory - Memory usage per service
 /latency - HTTP latency P95/P99
 /traffic - Request rate per service
+/error - Detail error + contoh log error terbaru
 /errors - HTTP error rate (4xx/5xx)
 
 <b>📝 Logs</b>
-/logs &lt;service&gt; - Recent logs (default: error)
+/logs - Recent logs semua service
+/logs &lt;service&gt; - Recent logs per service
 /logs_error &lt;service&gt; - Error logs
 /logs_all &lt;service&gt; - All recent logs
 
@@ -254,27 +281,22 @@ async def alert_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        headers = _grafana_headers()
-
         async with httpx.AsyncClient(timeout=10) as client:
             # Query annotation (alert state history) from Grafana.
             now = datetime.now(timezone.utc)
             from_ts = int((now - timedelta(hours=24)).timestamp() * 1000)
             to_ts = int(now.timestamp() * 1000)
 
-            ann_resp = await client.get(
-                f"{GRAFANA_URL}/api/annotations",
+            ann_resp = await _grafana_get(
+                client,
+                "/api/annotations",
                 params={"from": from_ts, "to": to_ts, "type": "alert", "limit": 20},
-                headers=headers,
             )
             annotations = ann_resp.json() if ann_resp.status_code == 200 else []
 
             # Fallback for setups where annotation history is disabled or empty.
             if not annotations:
-                prom_resp = await client.get(
-                    f"{GRAFANA_URL}/api/prometheus/grafana/api/v1/alerts",
-                    headers=headers,
-                )
+                prom_resp = await _grafana_get(client, "/api/prometheus/grafana/api/v1/alerts")
                 prom_payload = prom_resp.json() if prom_resp.status_code == 200 else {}
                 current_alerts = prom_payload.get("data", {}).get("alerts", [])
             else:
@@ -460,7 +482,7 @@ async def errors(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ==================== LOGS ====================
 
 async def _query_loki(query: str, limit: int = 20) -> list:
-    """Query Loki for logs."""
+    """Query Loki for near-real-time logs."""
     async with httpx.AsyncClient(timeout=10) as client:
         resp = await client.get(
             f"{LOKI_URL}/loki/api/v1/query_range",
@@ -468,7 +490,7 @@ async def _query_loki(query: str, limit: int = 20) -> list:
                 "query": query,
                 "limit": limit,
                 "direction": "backward",
-                "start": int((datetime.now(timezone.utc) - timedelta(hours=1)).timestamp() * 1e9),
+                "start": int((datetime.now(timezone.utc) - timedelta(minutes=5)).timestamp() * 1e9),
                 "end": int(datetime.now(timezone.utc).timestamp() * 1e9),
             }
         )
@@ -483,29 +505,32 @@ async def _query_loki(query: str, limit: int = 20) -> list:
 
 
 async def logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Get recent error logs for a service."""
+    """Get recent general logs (all levels), optionally filtered by service."""
     if not is_authorized(update):
         return
 
     service = context.args[0] if context.args else ""
-    if not service:
-        await update.message.reply_text(
-            "ℹ️ Usage: /logs &lt;service&gt;\n\n"
-            f"Services: {', '.join(SERVICES)}",
-            parse_mode=ParseMode.HTML,
-        )
-        return
+    target = service if service else "semua service"
+    await update.message.reply_text(f"⏳ Fetching recent logs untuk {target}...")
 
-    await update.message.reply_text(f"⏳ Fetching error logs for {service}...")
+    if service:
+        query = f'{{namespace="ecommerce", pod=~"{service}.*"}}'
+    else:
+        query = '{namespace="ecommerce"}'
 
-    query = f'{{namespace="ecommerce", pod=~"{service}.*"}} |~ "(?i)error"'
     log_entries = await _query_loki(query, limit=10)
 
     if not log_entries:
-        await update.message.reply_text(f"✅ Tidak ada error logs untuk <code>{service}</code> (1 jam terakhir).", parse_mode=ParseMode.HTML)
+        if service:
+            await update.message.reply_text(
+                f"✅ Tidak ada logs terbaru untuk <code>{service}</code> (5 menit terakhir).",
+                parse_mode=ParseMode.HTML,
+            )
+        else:
+            await update.message.reply_text("✅ Tidak ada logs terbaru (5 menit terakhir).", parse_mode=ParseMode.HTML)
         return
 
-    text = f"📝 <b>Error Logs: {service}</b> (1 jam terakhir)\n\n"
+    text = f"📝 <b>Recent Logs: {target}</b> (5 menit terakhir)\n\n"
     for i, entry in enumerate(log_entries[:10], 1):
         # Truncate long log lines
         truncated = entry[:150] + "..." if len(entry) > 150 else entry
@@ -527,10 +552,13 @@ async def logs_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     log_entries = await _query_loki(query, limit=15)
 
     if not log_entries:
-        await update.message.reply_text(f"✅ No error/fatal logs for <code>{service}</code>.", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(
+            f"✅ No error/fatal logs for <code>{service}</code> (5 menit terakhir).",
+            parse_mode=ParseMode.HTML,
+        )
         return
 
-    text = f"🔴 <b>Error/Fatal Logs: {service}</b>\n\n"
+    text = f"🔴 <b>Error/Fatal Logs: {service}</b> (5 menit terakhir)\n\n"
     for entry in log_entries[:10]:
         text += f"<code>{entry[:150]}</code>\n\n"
 
@@ -550,13 +578,64 @@ async def logs_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
     log_entries = await _query_loki(query, limit=15)
 
     if not log_entries:
-        await update.message.reply_text(f"⚠️ No logs for <code>{service}</code>.", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(
+            f"⚠️ No logs for <code>{service}</code> (5 menit terakhir).",
+            parse_mode=ParseMode.HTML,
+        )
         return
 
-    text = f"📋 <b>Recent Logs: {service}</b>\n\n"
+    text = f"📋 <b>Recent Logs: {service}</b> (5 menit terakhir)\n\n"
     for entry in log_entries[:10]:
         text += f"<code>{entry[:150]}</code>\n\n"
 
+    await update.message.reply_text(text[:4000], parse_mode=ParseMode.HTML)
+
+
+async def error_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show current HTTP errors and the latest related error logs."""
+    if not is_authorized(update):
+        return
+
+    data = await _query_mimir(
+        'sum by (job, http_status_code) (rate(http_server_duration_milliseconds_count{http_status_code=~"[4-5].."}[5m]))'
+    )
+    results = data.get("data", {}).get("result", [])
+
+    if not results:
+        await update.message.reply_text("✅ <b>Tidak ada HTTP error saat ini.</b>", parse_mode=ParseMode.HTML)
+        return
+
+    sorted_results = sorted(results, key=lambda x: float(x["value"][1]), reverse=True)
+
+    text = "❌ <b>Current HTTP Errors + Why</b>\n\n"
+    top = sorted_results[0]
+    top_job = top["metric"].get("job", "unknown")
+    top_code = top["metric"].get("http_status_code", "?")
+    top_rate = float(top["value"][1])
+
+    text += "<b>Top error saat ini:</b>\n"
+    text += f"🔴 <code>{top_job}</code> [{top_code}] {top_rate:.3f} req/s\n\n"
+    text += "<b>Ringkasan error rate:</b>\n"
+
+    for r in sorted_results[:8]:
+        job = r["metric"].get("job", "unknown")
+        code = r["metric"].get("http_status_code", "?")
+        value = float(r["value"][1])
+        text += f"• <code>{job}</code> [{code}] {value:.3f} req/s\n"
+
+    # Try to infer service name used in pod labels, then fetch latest error logs.
+    service_guess = top_job.replace("-service", "")
+    query = f'{{namespace="ecommerce", pod=~"{service_guess}.*"}} |~ "(?i)error|exception|panic|timeout|failed|404|500"'
+    log_entries = await _query_loki(query, limit=5)
+
+    if log_entries:
+        text += "\n<b>Contoh log error terbaru:</b>\n"
+        for i, entry in enumerate(log_entries, 1):
+            text += f"<code>{i}. {entry[:160]}</code>\n"
+    else:
+        text += "\nℹ️ Belum ada baris log error yang match dalam 5 menit terakhir."
+
+    text += f"\n\n🕐 <i>{datetime.now(WIB).strftime('%d %b %Y %H:%M WIB')}</i>"
     await update.message.reply_text(text[:4000], parse_mode=ParseMode.HTML)
 
 
@@ -667,8 +746,7 @@ async def incident(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         # Get current alerts
         async with httpx.AsyncClient(timeout=10) as client:
-            headers = {"Authorization": f"Bearer {GRAFANA_API_KEY}"} if GRAFANA_API_KEY else {}
-            resp = await client.get(f"{GRAFANA_URL}/api/alertmanager/grafana/api/v2/alerts", headers=headers)
+            resp = await _grafana_get(client, "/api/alertmanager/grafana/api/v2/alerts")
             alerts_data = resp.json() if resp.status_code == 200 else []
 
         firing = [a for a in alerts_data if a.get("status", {}).get("state") == "active"]
@@ -1200,8 +1278,9 @@ async def post_init(application):
         BotCommand("memory", "Memory usage per service"),
         BotCommand("latency", "HTTP latency P95"),
         BotCommand("traffic", "Request rate per service"),
+        BotCommand("error", "Detail error + log terbaru"),
         BotCommand("errors", "HTTP error rate 4xx/5xx"),
-        BotCommand("logs", "Error logs: /logs <service>"),
+        BotCommand("logs", "Recent logs (semua/per service)"),
         BotCommand("traces", "Slow traces: /traces <service>"),
         BotCommand("incident", "AI incident summary"),
         BotCommand("diagnose", "AI diagnosis: /diagnose <service>"),
@@ -1235,6 +1314,7 @@ def main():
     app.add_handler(CommandHandler("memory", memory))
     app.add_handler(CommandHandler("latency", latency))
     app.add_handler(CommandHandler("traffic", traffic))
+    app.add_handler(CommandHandler("error", error_detail))
     app.add_handler(CommandHandler("errors", errors))
 
     # Logs

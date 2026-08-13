@@ -2,7 +2,9 @@
 # kubectl create secret generic telegram-bot-secrets \
 #   --namespace=ecommerce \
 #   --from-literal=TELEGRAM_BOT_TOKEN=<your-bot-token> \
-#   --from-literal=GRAFANA_API_KEY=<your-grafana-api-key>
+#   --from-literal=GRAFANA_API_KEY=<your-grafana-api-key> \
+#   --from-literal=GRAFANA_USERNAME=<grafana-username-optional> \
+#   --from-literal=GRAFANA_PASSWORD=<grafana-password-optional>
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,6 +37,18 @@ spec:
                 secretKeyRef:
                   name: telegram-bot-secrets
                   key: GRAFANA_API_KEY
+            - name: GRAFANA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: telegram-bot-secrets
+                  key: GRAFANA_USERNAME
+                  optional: true
+            - name: GRAFANA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: telegram-bot-secrets
+                  key: GRAFANA_PASSWORD
+                  optional: true
             - name: GRAFANA_URL
               value: "http://grafana.monitoring.svc.cluster.local"
             - name: LOKI_URL
