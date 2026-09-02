@@ -5,9 +5,33 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"sync/atomic"
 
 	"github.com/ecommerce/observability"
 )
+
+// simulateLoadIssue toggles an intentionally injected CPU bottleneck + intermittent
+// failure in /products, used for observability drills (Mimir/Loki/Tempo/Pyroscope).
+var simulateLoadIssue = os.Getenv("SIMULATE_LOAD_ISSUE") == "true"
+
+var productRequestCounter int64
+
+// rankProductsByRelevance does a deliberately inefficient O(n^3)-ish scoring pass
+// to simulate a slow/expensive product-ranking algorithm, so it shows up as a
+// hot function in the Pyroscope CPU flamegraph.
+func rankProductsByRelevance(items []Product) []Product {
+	scores := make([]float64, len(items))
+	for round := 0; round < 20000; round++ {
+		for i, p := range items {
+			for j := range items {
+				scores[i] += (p.Price + float64(len(p.Name)+j)) / 3.14159
+			}
+		}
+	}
+	_ = scores
+	return items
+}
 
 type Product struct {
 	ID       string  `json:"id"`
@@ -45,9 +69,24 @@ func main() {
 
 	mux.HandleFunc("/products", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		log.Printf("[PRODUCT] Returning %d products", len(products))
 		db.Query(r.Context(), "products", "SELECT", "*")
-		json.NewEncoder(w).Encode(products)
+
+		result := products
+		if simulateLoadIssue {
+			n := atomic.AddInt64(&productRequestCounter, 1)
+			if n%5 == 0 {
+				result = rankProductsByRelevance(products)
+			}
+			if n%25 == 0 {
+				log.Printf("[PRODUCT] ERROR simulated overload while ranking products (request #%d)", n)
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(w, `{"error":"product ranking service temporarily overloaded"}`)
+				return
+			}
+		}
+
+		log.Printf("[PRODUCT] Returning %d products", len(result))
+		json.NewEncoder(w).Encode(result)
 	})
 
 	mux.HandleFunc("/products/", func(w http.ResponseWriter, r *http.Request) {

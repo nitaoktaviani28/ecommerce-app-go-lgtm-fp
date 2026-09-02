@@ -20,6 +20,9 @@ spec:
         - containerPort: 8080
         - containerPort: 6060
           name: pprof
+        env:
+        - name: SIMULATE_LOAD_ISSUE
+          value: "true"
         livenessProbe:
           httpGet:
             path: /health
