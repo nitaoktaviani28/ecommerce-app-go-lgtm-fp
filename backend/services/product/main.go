@@ -22,7 +22,7 @@ var productRequestCounter int64
 // hot function in the Pyroscope CPU flamegraph.
 func rankProductsByRelevance(items []Product) []Product {
 	scores := make([]float64, len(items))
-	for round := 0; round < 20000; round++ {
+	for round := 0; round < 300000; round++ {
 		for i, p := range items {
 			for j := range items {
 				scores[i] += (p.Price + float64(len(p.Name)+j)) / 3.14159
@@ -74,10 +74,10 @@ func main() {
 		result := products
 		if simulateLoadIssue {
 			n := atomic.AddInt64(&productRequestCounter, 1)
-			if n%5 == 0 {
+			if n%2 == 0 {
 				result = rankProductsByRelevance(products)
 			}
-			if n%25 == 0 {
+			if n%4 == 0 {
 				log.Printf("[PRODUCT] ERROR simulated overload while ranking products (request #%d)", n)
 				w.WriteHeader(http.StatusInternalServerError)
 				fmt.Fprintf(w, `{"error":"product ranking service temporarily overloaded"}`)
